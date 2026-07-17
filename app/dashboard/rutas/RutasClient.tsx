@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { marcarRevisadoBascula, programarRuta, type PedidoEntrega } from '@/lib/rutas';
+import { marcarRevisadoBascula, programarRuta, reordenarRuta, type PedidoEntrega } from '@/lib/rutas';
+import { googleMapsDirectionsUrl, type Coord } from '@/lib/gps';
 import { fmtDia, fmtMoney } from '@/lib/semana';
+
+const RutaMapa = dynamic(() => import('@/components/RutaMapa'), { ssr: false });
 
 interface Props {
   userId: string;
@@ -30,12 +34,14 @@ function PedidoRow({
   onToggle,
   showEstado,
   showTipo,
+  ordenSugerido,
 }: {
   pedido: PedidoEntrega;
   checked?: boolean;
   onToggle?: () => void;
   showEstado?: boolean;
   showTipo?: boolean;
+  ordenSugerido?: number;
 }) {
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50">
@@ -44,8 +50,10 @@ function PedidoRow({
           <input type="checkbox" checked={checked} onChange={onToggle} className="rounded" />
         </td>
       )}
-      {pedido.orden_ruta != null && (
-        <td className="px-3 py-2 text-sm font-bold text-emerald-700">{pedido.orden_ruta}</td>
+      {(pedido.orden_ruta != null || ordenSugerido != null) && (
+        <td className="px-3 py-2 text-sm font-bold text-emerald-700">
+          {ordenSugerido ?? pedido.orden_ruta}
+        </td>
       )}
       <td className="px-3 py-2 text-sm font-medium text-slate-800">{pedido.cliente}</td>
       <td className="px-3 py-2 text-sm text-slate-600">{pedido.telefono ?? '—'}</td>
@@ -89,9 +97,13 @@ export default function RutasClient({
 }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [optimizando, setOptimizando] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [optInfo, setOptInfo] = useState<string | null>(null);
   const [seleccionBascula, setSeleccionBascula] = useState<Set<string>>(new Set());
   const [seleccionRuta, setSeleccionRuta] = useState<Set<string>>(new Set());
+  const [ordenSugerido, setOrdenSugerido] = useState<string[] | null>(null);
+  const [coordsOpt, setCoordsOpt] = useState<Record<string, Coord>>({});
 
   const navegar = (vista: string, extra?: Record<string, string>) => {
     const p = new URLSearchParams({ vista, fecha: fechaVenta, entrega: fechaEntrega, ...extra });
@@ -103,6 +115,8 @@ export default function RutasClient({
     if (next.has(id)) next.delete(id);
     else next.add(id);
     setter(next);
+    setOrdenSugerido(null);
+    setOptInfo(null);
   };
 
   const marcarRevisados = async () => {
@@ -122,19 +136,99 @@ export default function RutasClient({
     }
   };
 
-  const crearRuta = async () => {
-    const ids = [...seleccionRuta];
+  const sugerirOrden = async (ids: string[], pedidos: PedidoEntrega[]) => {
+    if (ids.length < 2) {
+      setActionError('Selecciona al menos 2 paradas para optimizar');
+      return null;
+    }
+    setOptimizando(true);
+    setActionError(null);
+    setOptInfo(null);
+    try {
+      const byId = new Map(pedidos.map(p => [p.quote_id, p]));
+      const res = await fetch('/api/optimizar-ruta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paradas: ids.map(id => {
+            const p = byId.get(id)!;
+            return {
+              id,
+              direccion: p.direccion,
+              lat: p.lat,
+              lng: p.lng,
+            };
+          }),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo optimizar');
+
+      setCoordsOpt(data.coords ?? {});
+      setOrdenSugerido(data.order as string[]);
+      const metodo = data.method === 'osrm' ? 'por calles (OSRM)' : 'por distancia aproximada';
+      const km = data.kmAprox != null ? ` · ~${data.kmAprox.toFixed(1)} km` : '';
+      const fallidas = (data.fallidas as string[] | undefined)?.length ?? 0;
+      setOptInfo(
+        `Orden sugerido ${metodo}${km}` +
+          (fallidas > 0 ? ` · ${fallidas} dirección(es) sin ubicar (quedan al final)` : ''),
+      );
+      return { order: data.order as string[], coords: data.coords as Record<string, Coord> };
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Error al sugerir ruta');
+      return null;
+    } finally {
+      setOptimizando(false);
+    }
+  };
+
+  const crearRuta = async (usarOrdenGps: boolean) => {
+    let ids = ordenSugerido?.filter(id => seleccionRuta.has(id)) ?? [...seleccionRuta];
+    // Incluir seleccionados que no entraron en el orden (falló geocode)
+    for (const id of seleccionRuta) {
+      if (!ids.includes(id)) ids.push(id);
+    }
     if (ids.length === 0) return;
+
+    let coords = coordsOpt;
+    if (usarOrdenGps && !ordenSugerido) {
+      const result = await sugerirOrden(ids, pedidosPorProgramar);
+      if (!result) return;
+      ids = result.order;
+      for (const id of seleccionRuta) {
+        if (!ids.includes(id)) ids.push(id);
+      }
+      coords = result.coords;
+    }
+
     setLoading(true);
     setActionError(null);
     try {
       const supabase = createClient();
-      await programarRuta(supabase, ids, fechaEntrega, userId);
+      await programarRuta(supabase, ids, fechaEntrega, userId, coords);
       setSeleccionRuta(new Set());
+      setOrdenSugerido(null);
+      setCoordsOpt({});
       navegar('ruta');
       router.refresh();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'No se pudo programar la ruta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const optimizarRutaExistente = async () => {
+    const ids = ruta.map(p => p.quote_id);
+    const result = await sugerirOrden(ids, ruta);
+    if (!result) return;
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      await reordenarRuta(supabase, result.order, userId, result.coords);
+      router.refresh();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'No se pudo reordenar');
     } finally {
       setLoading(false);
     }
@@ -145,6 +239,47 @@ export default function RutasClient({
   const pendientes = pedidosDia.filter(p => !p.revisado_bascula);
   const conRuta = pedidosDia.filter(p => p.para_ruta);
   const tabs = puedeProgramar ? allTabs : allTabs.filter(t => t.id === 'bascula');
+
+  const ordenMap = useMemo(() => {
+    if (!ordenSugerido) return new Map<string, number>();
+    return new Map(ordenSugerido.map((id, i) => [id, i + 1]));
+  }, [ordenSugerido]);
+
+  const listaProgramar = useMemo(() => {
+    if (!ordenSugerido) return pedidosPorProgramar;
+    const byId = new Map(pedidosPorProgramar.map(p => [p.quote_id, p]));
+    const ordered = ordenSugerido.map(id => byId.get(id)).filter(Boolean) as PedidoEntrega[];
+    const rest = pedidosPorProgramar.filter(p => !ordenSugerido.includes(p.quote_id));
+    return [...ordered, ...rest];
+  }, [pedidosPorProgramar, ordenSugerido]);
+
+  const marcadoresRuta = useMemo(
+    () =>
+      ruta
+        .filter(p => p.lat != null && p.lng != null)
+        .map(p => ({
+          lat: p.lat!,
+          lng: p.lng!,
+          orden: p.orden_ruta ?? 0,
+          label: p.cliente,
+          direccion: p.direccion,
+        })),
+    [ruta],
+  );
+
+  const depot: Coord | null = (() => {
+    const lat = Number(process.env.NEXT_PUBLIC_DEPOT_LAT);
+    const lng = Number(process.env.NEXT_PUBLIC_DEPOT_LNG);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  })();
+
+  const mapsUrl =
+    marcadoresRuta.length > 0
+      ? googleMapsDirectionsUrl(
+          [...marcadoresRuta].sort((a, b) => a.orden - b.orden).map(m => ({ lat: m.lat, lng: m.lng })),
+          depot,
+        )
+      : null;
 
   return (
     <div>
@@ -238,7 +373,18 @@ export default function RutasClient({
       {/* PROGRAMAR */}
       {vistaActiva === 'programar' && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3 print:hidden">
+          {(actionError || optInfo) && (
+            <div
+              className={`rounded-lg px-4 py-2 text-sm ${
+                actionError
+                  ? 'bg-red-50 border border-red-200 text-red-700'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {actionError ?? optInfo}
+            </div>
+          )}
+          <div className="flex items-center gap-3 print:hidden flex-wrap">
             <label className="text-sm text-slate-600">Entrega para:</label>
             <input
               type="date"
@@ -247,7 +393,8 @@ export default function RutasClient({
               className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
             />
             <span className="text-sm text-slate-500">
-              {pedidosPorProgramar.length} pedido{pedidosPorProgramar.length !== 1 ? 's' : ''} listo{pedidosPorProgramar.length !== 1 ? 's' : ''}
+              {pedidosPorProgramar.length} pedido{pedidosPorProgramar.length !== 1 ? 's' : ''} listo
+              {pedidosPorProgramar.length !== 1 ? 's' : ''}
             </span>
           </div>
 
@@ -263,6 +410,7 @@ export default function RutasClient({
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                       <th className="px-3 py-2 w-8" />
+                      {ordenSugerido && <th className="px-3 py-2">#</th>}
                       <th className="px-3 py-2">Cliente</th>
                       <th className="px-3 py-2">Teléfono</th>
                       <th className="px-3 py-2">Dirección</th>
@@ -271,24 +419,49 @@ export default function RutasClient({
                     </tr>
                   </thead>
                   <tbody>
-                    {pedidosPorProgramar.map(p => (
+                    {listaProgramar.map(p => (
                       <PedidoRow
                         key={p.quote_id}
                         pedido={p}
                         checked={seleccionRuta.has(p.quote_id)}
                         onToggle={() => toggle(seleccionRuta, p.quote_id, setSeleccionRuta)}
+                        ordenSugerido={ordenMap.get(p.quote_id)}
                       />
                     ))}
                   </tbody>
                 </table>
               </div>
-              <button
-                onClick={crearRuta}
-                disabled={loading || seleccionRuta.size === 0}
-                className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-              >
-                Programar {seleccionRuta.size || ''} pedido{seleccionRuta.size !== 1 ? 's' : ''} para {fmtDia(fechaEntrega)}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => sugerirOrden([...seleccionRuta], pedidosPorProgramar)}
+                  disabled={optimizando || seleccionRuta.size < 2}
+                  className="px-4 py-2 border border-emerald-600 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 disabled:opacity-50"
+                >
+                  {optimizando ? 'Calculando GPS...' : 'Sugerir orden óptimo'}
+                </button>
+                <button
+                  onClick={() => crearRuta(false)}
+                  disabled={loading || optimizando || seleccionRuta.size === 0}
+                  className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {loading
+                    ? 'Guardando...'
+                    : `Programar ${seleccionRuta.size || ''} pedido${seleccionRuta.size !== 1 ? 's' : ''} para ${fmtDia(fechaEntrega)}`}
+                </button>
+                {seleccionRuta.size >= 2 && !ordenSugerido && (
+                  <button
+                    onClick={() => crearRuta(true)}
+                    disabled={loading || optimizando}
+                    className="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 disabled:opacity-50"
+                  >
+                    Optimizar y programar
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-slate-500">
+                El orden de selección (o el sugerido por GPS) define las paradas 1…n. La optimización usa OpenStreetMap
+                (sin costo de API).
+              </p>
             </>
           )}
         </div>
@@ -297,7 +470,18 @@ export default function RutasClient({
       {/* VER RUTA */}
       {vistaActiva === 'ruta' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between print:hidden">
+          {(actionError || optInfo) && (
+            <div
+              className={`rounded-lg px-4 py-2 text-sm print:hidden ${
+                actionError
+                  ? 'bg-red-50 border border-red-200 text-red-700'
+                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              }`}
+            >
+              {actionError ?? optInfo}
+            </div>
+          )}
+          <div className="flex items-center justify-between print:hidden flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <label className="text-sm text-slate-600">Ruta del:</label>
               <input
@@ -308,9 +492,28 @@ export default function RutasClient({
               />
             </div>
             {ruta.length > 0 && (
-              <button onClick={imprimir} className="px-4 py-2 border border-slate-300 text-sm rounded-lg hover:bg-slate-50">
-                Imprimir ruta
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={optimizarRutaExistente}
+                  disabled={optimizando || loading || ruta.length < 2}
+                  className="px-4 py-2 border border-emerald-600 text-emerald-700 text-sm rounded-lg hover:bg-emerald-50 disabled:opacity-50"
+                >
+                  {optimizando ? 'Optimizando...' : 'Reordenar por GPS'}
+                </button>
+                {mapsUrl && (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                  >
+                    Abrir en Google Maps
+                  </a>
+                )}
+                <button onClick={imprimir} className="px-4 py-2 border border-slate-300 text-sm rounded-lg hover:bg-slate-50">
+                  Imprimir ruta
+                </button>
+              </div>
             )}
           </div>
 
@@ -324,28 +527,53 @@ export default function RutasClient({
               No hay pedidos programados para {fmtDia(fechaEntrega, 'long')}.
             </div>
           ) : (
-            <div className="space-y-3">
-              {ruta.map(p => (
-                <div key={p.quote_id} className="bg-white rounded-xl border border-slate-200 p-4 print:break-inside-avoid">
-                  <div className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      {p.orden_ruta}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-800">{p.cliente}</p>
-                      {p.telefono && <p className="text-sm text-slate-600">{p.telefono}</p>}
-                      <p className="text-sm text-slate-700 mt-1">📍 {p.direccion}</p>
-                      <ul className="mt-2 text-sm text-slate-600 space-y-0.5">
-                        {p.items.map((it, i) => (
-                          <li key={i}>· {it.description} — {it.quantity} {it.unit}</li>
-                        ))}
-                      </ul>
-                      <p className="text-sm font-medium text-slate-800 mt-2">{fmtMoney(p.total)}</p>
+            <>
+              {marcadoresRuta.length > 0 ? (
+                <RutaMapa
+                  paradas={marcadoresRuta}
+                  depot={depot}
+                  depotLabel={process.env.NEXT_PUBLIC_DEPOT_LABEL || 'Bodega GCA'}
+                />
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 print:hidden">
+                  Aún no hay coordenadas. Usa <strong>Reordenar por GPS</strong> para ubicar las direcciones en el mapa.
+                </div>
+              )}
+              <div className="space-y-3">
+                {ruta.map(p => (
+                  <div key={p.quote_id} className="bg-white rounded-xl border border-slate-200 p-4 print:break-inside-avoid">
+                    <div className="flex items-start gap-3">
+                      <span className="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        {p.orden_ruta}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-800">{p.cliente}</p>
+                        {p.telefono && <p className="text-sm text-slate-600">{p.telefono}</p>}
+                        <p className="text-sm text-slate-700 mt-1">📍 {p.direccion}</p>
+                        {p.lat != null && p.lng != null && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:underline print:hidden"
+                          >
+                            Ver en mapa
+                          </a>
+                        )}
+                        <ul className="mt-2 text-sm text-slate-600 space-y-0.5">
+                          {p.items.map((it, i) => (
+                            <li key={i}>
+                              · {it.description} — {it.quantity} {it.unit}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-sm font-medium text-slate-800 mt-2">{fmtMoney(p.total)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

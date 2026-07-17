@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { puedeAccederRuta, rutaInicio, tieneAccesoPortal } from '@/lib/auth';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -28,32 +29,38 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const isLoginPage = request.nextUrl.pathname === '/login';
+  const isSetPassword = request.nextUrl.pathname === '/set-password';
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
   const path = request.nextUrl.pathname;
+  const isApi = path.startsWith('/api');
 
   if (!user && isDashboard) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (user && isLoginPage) {
+  // Recuperación / invitación: permitir set-password con sesión parcial
+  if (user && isLoginPage && !isSetPassword) {
     const { data: staffUser } = await supabase
       .from('staff_users')
       .select('role')
       .eq('id', user.id)
       .single();
-    const dest = staffUser?.role === 'logistica' ? '/dashboard/rutas' : '/dashboard';
-    return NextResponse.redirect(new URL(dest, request.url));
+    return NextResponse.redirect(new URL(rutaInicio(staffUser?.role), request.url));
   }
 
-  // Logística solo ve rutas
-  if (user && isDashboard && !path.startsWith('/dashboard/rutas')) {
+  if (user && isDashboard && !isApi) {
     const { data: staffUser } = await supabase
       .from('staff_users')
       .select('role, is_active')
       .eq('id', user.id)
       .single();
-    if (staffUser?.role === 'logistica' && staffUser.is_active) {
-      return NextResponse.redirect(new URL('/dashboard/rutas', request.url));
+
+    if (!staffUser?.is_active || !tieneAccesoPortal(staffUser.role)) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    if (!puedeAccederRuta(staffUser.role, path)) {
+      return NextResponse.redirect(new URL(rutaInicio(staffUser.role), request.url));
     }
   }
 

@@ -6,6 +6,8 @@ export interface PedidoEntrega {
   revisado_bascula: boolean;
   fecha_entrega: string | null;
   orden_ruta: number | null;
+  lat: number | null;
+  lng: number | null;
   cliente: string;
   telefono: string | null;
   direccion: string;
@@ -65,6 +67,8 @@ type EstadoEntrega = {
   revisado_bascula: boolean;
   fecha_entrega: string | null;
   orden_ruta: number | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 /** Fecha de venta en zona México (misma lógica que portal-staff-gca) */
@@ -144,6 +148,8 @@ function quoteAPedido(q: QuoteRow, fecha: string, estado?: EstadoEntrega): Pedid
     revisado_bascula: estado?.revisado_bascula ?? false,
     fecha_entrega: estado?.fecha_entrega ?? null,
     orden_ruta: estado?.orden_ruta ?? null,
+    lat: estado?.lat ?? null,
+    lng: estado?.lng ?? null,
     cliente: clients?.full_name ?? q.client_name_temporary ?? 'Sin nombre',
     telefono: clients?.phone_number ?? q.client_phone_temporary ?? null,
     direccion: dir,
@@ -188,7 +194,7 @@ async function fetchEstadoEntregas(
   if (quoteIds.length === 0) return new Map();
   const { data, error } = await supabase
     .from('entregas_programadas')
-    .select('quote_id, revisado_bascula, fecha_entrega, orden_ruta')
+    .select('quote_id, revisado_bascula, fecha_entrega, orden_ruta, lat, lng')
     .in('quote_id', quoteIds);
   if (error) throw supabaseErr(error);
   return new Map((data ?? []).map(e => [e.quote_id, e as EstadoEntrega]));
@@ -228,7 +234,7 @@ export async function getPedidosDelDia(
 export async function getPedidosPorProgramar(supabase: SupabaseClient): Promise<PedidoEntrega[]> {
   const { data, error } = await supabase
     .from('entregas_programadas')
-    .select('quote_id, fecha_venta, revisado_bascula, fecha_entrega, orden_ruta')
+    .select('quote_id, fecha_venta, revisado_bascula, fecha_entrega, orden_ruta, lat, lng')
     .eq('revisado_bascula', true)
     .is('fecha_entrega', null)
     .order('fecha_venta', { ascending: true });
@@ -266,9 +272,12 @@ export async function programarRuta(
   quoteIds: string[],
   fechaEntrega: string,
   userId: string,
+  coords?: Record<string, { lat: number; lng: number }>,
 ): Promise<void> {
   const now = new Date().toISOString();
   for (let i = 0; i < quoteIds.length; i++) {
+    const id = quoteIds[i];
+    const c = coords?.[id];
     const { error } = await supabase
       .from('entregas_programadas')
       .update({
@@ -276,8 +285,35 @@ export async function programarRuta(
         orden_ruta: i + 1,
         programado_por: userId,
         programado_at: now,
+        ...(c
+          ? { lat: c.lat, lng: c.lng, geocoded_at: now }
+          : {}),
       })
-      .eq('quote_id', quoteIds[i]);
+      .eq('quote_id', id);
+    if (error) throw supabaseErr(error);
+  }
+}
+
+/** Reordena una ruta ya programada y opcionalmente guarda coords. */
+export async function reordenarRuta(
+  supabase: SupabaseClient,
+  quoteIds: string[],
+  userId: string,
+  coords?: Record<string, { lat: number; lng: number }>,
+): Promise<void> {
+  const now = new Date().toISOString();
+  for (let i = 0; i < quoteIds.length; i++) {
+    const id = quoteIds[i];
+    const c = coords?.[id];
+    const { error } = await supabase
+      .from('entregas_programadas')
+      .update({
+        orden_ruta: i + 1,
+        programado_por: userId,
+        programado_at: now,
+        ...(c ? { lat: c.lat, lng: c.lng, geocoded_at: now } : {}),
+      })
+      .eq('quote_id', id);
     if (error) throw supabaseErr(error);
   }
 }
@@ -285,7 +321,7 @@ export async function programarRuta(
 export async function getRutaEntrega(supabase: SupabaseClient, fechaEntrega: string): Promise<PedidoEntrega[]> {
   const { data, error } = await supabase
     .from('entregas_programadas')
-    .select('quote_id, fecha_venta, revisado_bascula, fecha_entrega, orden_ruta')
+    .select('quote_id, fecha_venta, revisado_bascula, fecha_entrega, orden_ruta, lat, lng')
     .eq('fecha_entrega', fechaEntrega)
     .order('orden_ruta', { ascending: true });
 

@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Portal RH — Grupo Castro Acero",
-  description: "Sistema de nóminas y bitácora de embarques",
+  title: "Portal GCA — Grupo Castro Acero",
+  description: "Sistema integral de ventas, logística y control — Grupo Castro Acero",
 };
 
 export default function RootLayout({

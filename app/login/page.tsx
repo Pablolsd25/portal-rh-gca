@@ -65,7 +65,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-slate-800">Portal GCA</h1>
-          <p className="text-sm text-slate-500 mt-1">Grupo Castro Acero</p>
+          <p className="text-sm text-slate-500 mt-1">Sistema integral · Grupo Castro Acero</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -100,6 +100,36 @@ export default function LoginPage() {
               {error}
             </p>
           )}
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              if (!email.trim()) {
+                setError('Escribe tu correo para recuperar la contraseña.');
+                return;
+              }
+              setError(null);
+              setLoading(true);
+              try {
+                const supabase = createClient();
+                const origin = window.location.origin;
+                const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: `${origin}/set-password`,
+                });
+                if (resetError) throw resetError;
+                setError(null);
+                alert('Te enviamos un correo para restablecer la contraseña.');
+              } catch {
+                setError('No se pudo enviar el correo de recuperación.');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="w-full text-sm text-emerald-700 hover:text-emerald-800"
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
 
           <button
             type="submit"
