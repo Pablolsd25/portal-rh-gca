@@ -70,6 +70,7 @@ export default function ListaPreciosClient({
   };
 
   const guardarMeta = async () => {
+    if (!canEdit) return;
     setSaving(true);
     setError(null);
     try {
@@ -89,13 +90,14 @@ export default function ListaPreciosClient({
   };
 
   const empezarEdit = (m: Material) => {
+    if (!canEdit) return;
     setEditId(m.id);
     setDraft({ ...m });
     setError(null);
   };
 
   const guardarEdit = async () => {
-    if (!editId || !draft.descripcion) return;
+    if (!canEdit || !editId || !draft.descripcion) return;
     setSaving(true);
     setError(null);
     try {
@@ -124,7 +126,7 @@ export default function ListaPreciosClient({
 
   const crear = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nuevo.descripcion.trim()) return;
+    if (!canEdit || !nuevo.descripcion.trim()) return;
     setSaving(true);
     setError(null);
     try {
@@ -156,6 +158,7 @@ export default function ListaPreciosClient({
   };
 
   const borrar = async (id: string) => {
+    if (!canEdit) return;
     if (!confirm('¿Eliminar este material de la lista?')) return;
     setSaving(true);
     setError(null);
@@ -217,7 +220,10 @@ export default function ListaPreciosClient({
           <p className="font-semibold text-slate-800">{meta.empresa}</p>
           <p className="mt-1">Vigencia: {meta.fecha_vigencia?.slice(0, 10) || '—'}</p>
           {meta.notas && <p className="mt-1 text-xs text-slate-500">{meta.notas}</p>}
-          <p className="mt-2 text-xs text-amber-700">Solo lectura. Solicita a RH/Admin para cambios.</p>
+          <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            Vista de solo lectura: puedes consultar precios y descargar Excel. Los cambios los hace
+            RH o Admin.
+          </p>
         </div>
       )}
 
@@ -403,7 +409,11 @@ export default function ListaPreciosClient({
             {filtrados.length === 0 && (
               <tr>
                 <td colSpan={12} className="px-4 py-8 text-center text-slate-400">
-                  Sin materiales. Ejecuta el seed o agrega uno.
+                  {q
+                    ? 'Sin resultados para esa búsqueda'
+                    : canEdit
+                      ? 'Sin materiales. Ejecuta seed_lista_precios.sql o agrega uno.'
+                      : 'Sin materiales visibles. Si el problema continúa, pide a RH/Admin que ejecute schema_lista_precios_rls_vendedores.sql y el seed.'}
                 </td>
               </tr>
             )}

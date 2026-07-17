@@ -16,11 +16,11 @@ export default async function ReportePreciosPage() {
     .single();
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Reporte de precios</h1>
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+      <div className="mb-5">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Reporte de precios</h1>
         <p className="text-sm text-slate-600 mt-1">
-          Precios de competencia / clientes · tabla price_reports
+          Un comercio, varios materiales · precios unificados por tonelada (TON)
         </p>
       </div>
       <ReportePreciosClient userId={user.id} role={staff?.role ?? ''} />

@@ -695,13 +695,13 @@ export default function CotizacionesClient({
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-slate-600 text-left">
               <tr>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Vendedor</th>
-                <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Entrega</th>
-                <th className="px-4 py-3 font-medium text-center">Acciones</th>
+                <th className="px-3 py-3 font-medium">Cliente / Vendedor</th>
+                <th className="px-3 py-3 font-medium text-right">Monto</th>
+                <th className="px-3 py-3 font-medium">Estado</th>
+                <th className="px-3 py-3 font-medium">N.º factura</th>
+                <th className="px-3 py-3 font-medium">N.º referencia</th>
+                <th className="px-3 py-3 font-medium">Aprobó pago</th>
+                <th className="px-3 py-3 font-medium text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -713,23 +713,33 @@ export default function CotizacionesClient({
                 </tr>
               )}
               {paginated.map(quote => {
-                const badge = entregaBadge(quote);
                 const canPay =
                   canRegisterPayment &&
                   (quote.status === 'enviada' ||
                     quote.status === 'aceptada' ||
                     quote.status === 'por_definir');
                 const facturaValue = facturaDrafts[quote.id] ?? quote.numero_factura ?? '';
+                const paymentReferences = (quote.quote_payment_proofs || [])
+                  .map(p => p.reference_number)
+                  .filter(Boolean)
+                  .join(', ');
 
                 return (
                   <tr key={quote.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">{clientName(quote)}</p>
-                      {quote.delivery_address && (
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                          {quote.delivery_address}
-                        </p>
-                      )}
+                    <td className="px-3 py-2.5">
+                      <p className="font-medium text-xs text-slate-800">{clientName(quote)}</p>
+                      <p className="text-[11px] text-slate-500">
+                        {quote.vendedor?.full_name || '—'}
+                      </p>
+                      <p className="text-[10px] font-mono text-slate-400">
+                        {quote.id.slice(0, 8)}
+                      </p>
+                    </td>
+                    <td className="px-3 py-2.5 font-semibold text-right text-slate-800 whitespace-nowrap">
+                      {formatMoney(quote.total_amount)}
+                    </td>
+                    <td className="px-3 py-2.5">{statusPill(quote.status)}</td>
+                    <td className="px-3 py-2.5">
                       {canEditFactura(quote.status) && (
                         <input
                           type="text"
@@ -740,35 +750,37 @@ export default function CotizacionesClient({
                           }
                           onBlur={() => void saveFactura(quote)}
                           disabled={busyId === quote.id}
-                          className="mt-1 w-full max-w-[140px] px-2 py-1 text-xs border border-slate-200 rounded font-mono"
+                          className="w-24 px-2 py-1 text-xs border border-slate-200 rounded font-mono"
                         />
                       )}
                       {!canEditFactura(quote.status) && quote.numero_factura && (
-                        <p className="text-[11px] font-mono text-indigo-700 mt-0.5">
-                          Fact. {quote.numero_factura}
-                        </p>
+                        <span className="text-[11px] font-mono font-medium text-indigo-700">
+                          {quote.numero_factura}
+                        </span>
+                      )}
+                      {!canEditFactura(quote.status) && !quote.numero_factura && (
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-800">
-                      {formatMoney(quote.total_amount)}
-                    </td>
-                    <td className="px-4 py-3">{statusPill(quote.status)}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {quote.vendedor?.full_name || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                      {formatFechaMexico(quote.quote_date)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {badge ? (
-                        <span className="inline-flex text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                          {ENTREGA_BADGE_LABELS[badge]}
+                    <td className="px-3 py-2.5">
+                      {paymentReferences ? (
+                        <span className="text-[11px] font-mono font-medium text-blue-700">
+                          {paymentReferences}
                         </span>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
+                      {quote.confirmador?.full_name ? (
+                        <span className="text-xs font-medium text-slate-700">
+                          {quote.confirmador.full_name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center justify-center gap-1">
                         {canPay && (
                           <button
@@ -912,6 +924,7 @@ export default function CotizacionesClient({
                   <p className="text-[10px] text-gray-500 mt-0.5">
                     {quote.vendedor?.full_name || 'N/A'} · {formatFechaMexico(quote.quote_date)}
                   </p>
+                  <p className="text-[9px] font-mono text-gray-400">{quote.id.slice(0, 8)}</p>
                 </div>
                 {statusPill(quote.status)}
               </div>
@@ -967,6 +980,17 @@ export default function CotizacionesClient({
                     Número de Referencia
                   </p>
                   <p className="font-mono text-sm font-bold text-blue-900">{paymentReferences}</p>
+                </div>
+              )}
+
+              {quote.confirmador?.full_name && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 mb-2">
+                  <p className="text-[9px] text-slate-500 uppercase tracking-wide mb-0.5">
+                    Aprobó pago
+                  </p>
+                  <p className="text-xs font-semibold text-slate-800">
+                    {quote.confirmador.full_name}
+                  </p>
                 </div>
               )}
 
