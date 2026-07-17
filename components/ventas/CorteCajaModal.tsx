@@ -111,7 +111,7 @@ export default function CorteCajaModal({
               <span className="text-slate-600">Fondo inicial</span>
               <span className="font-medium">{formatMoney(session.fondo_inicial)}</span>
             </div>
-            <div className="flex justify-between text-emerald-700">
+            <div className="flex justify-between text-rose-700">
               <span>(+) Ventas efectivo</span>
               <span className="font-medium">{formatMoney(sessionDetails.totalVentasEfectivo)}</span>
             </div>
@@ -186,7 +186,7 @@ export default function CorteCajaModal({
                 diferencia === 0
                   ? 'bg-slate-100 text-slate-800'
                   : diferencia > 0
-                    ? 'bg-emerald-100 text-emerald-800'
+                    ? 'bg-rose-100 text-rose-800'
                     : 'bg-red-100 text-red-800'
               }`}
             >
@@ -204,7 +204,7 @@ export default function CorteCajaModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="px-3 py-2 text-sm bg-emerald-600 text-white rounded-lg disabled:opacity-50"
+                className="px-3 py-2 text-sm bg-rose-600 text-white rounded-lg disabled:opacity-50"
               >
                 {loading ? 'Cerrando…' : 'Cerrar caja'}
               </button>

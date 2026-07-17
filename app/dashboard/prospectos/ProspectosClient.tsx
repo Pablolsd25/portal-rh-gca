@@ -22,7 +22,7 @@ const STATUS_STYLES: Record<string, string> = {
   contactado: 'bg-indigo-100 text-indigo-700',
   interesado: 'bg-amber-100 text-amber-700',
   cotizado: 'bg-purple-100 text-purple-700',
-  convertido: 'bg-emerald-100 text-emerald-700',
+  convertido: 'bg-rose-100 text-rose-700',
   descartado: 'bg-slate-100 text-slate-500',
 };
 
@@ -180,7 +180,7 @@ export default function ProspectosClient({ userId }: { userId: string }) {
         <button
           type="button"
           onClick={() => setShow(s => !s)}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg"
+          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-lg"
         >
           {show ? 'Cancelar' : 'Nuevo prospecto'}
         </button>
@@ -220,7 +220,7 @@ export default function ProspectosClient({ userId }: { userId: string }) {
           <button
             type="submit"
             disabled={busy}
-            className="sm:col-span-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+            className="sm:col-span-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             Guardar
           </button>
@@ -285,7 +285,7 @@ export default function ProspectosClient({ userId }: { userId: string }) {
                         </Link>
                         <Link
                           href={cotizarHref(p)}
-                          className="text-xs px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg"
+                          className="text-xs px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg"
                         >
                           Cotizar
                         </Link>

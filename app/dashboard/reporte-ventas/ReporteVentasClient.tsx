@@ -375,7 +375,7 @@ export default function ReporteVentasClient({ userName, userSucursal }: Props) {
             <div className="text-lg font-bold text-slate-800">{totalVentas}</div>
             <div className="text-[10px] text-slate-600">Ventas</div>
           </div>
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 text-center min-w-[110px]">
+          <div className="bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 text-center min-w-[110px]">
             <div className="text-sm font-bold text-slate-800 truncate">{formatMoney(totalMonto)}</div>
             <div className="text-[10px] text-slate-600">Total</div>
           </div>
@@ -399,7 +399,7 @@ export default function ReporteVentasClient({ userName, userSucursal }: Props) {
           Menos ventas: <strong>{lowestSeller?.name || 'N/A'}</strong>
           <span className="text-slate-500">({lowestSeller?.totalSales || 0})</span>
         </span>
-        <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-1">
+        <span className="inline-flex items-center gap-1 bg-rose-50 border border-rose-100 rounded-lg px-2 py-1">
           Más monto: <strong>{topByAmount?.name || 'N/A'}</strong>
         </span>
         <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1">
@@ -537,7 +537,7 @@ export default function ReporteVentasClient({ userName, userSucursal }: Props) {
           <button
             type="button"
             onClick={() => void load()}
-            className="px-3 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="px-3 py-2 text-sm rounded-lg bg-rose-600 hover:bg-rose-700 text-white"
           >
             Actualizar
           </button>

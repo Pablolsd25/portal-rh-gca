@@ -222,7 +222,7 @@ export default function CreditoForm({
             type="button"
             onClick={onAddMaterial}
             disabled={loading}
-            className="text-xs font-medium text-emerald-700 hover:underline"
+            className="text-xs font-medium text-rose-700 hover:underline"
           >
             + Agregar fila
           </button>
@@ -340,7 +340,7 @@ export default function CreditoForm({
         </div>
         <div>
           <p className="text-slate-500">Total a pagar</p>
-          <p className="font-semibold text-emerald-700">{formatMoney(totals.totalDue)}</p>
+          <p className="font-semibold text-rose-700">{formatMoney(totals.totalDue)}</p>
         </div>
         <div>
           <p className="text-slate-500">Pago semanal (ref.)</p>
@@ -365,7 +365,7 @@ export default function CreditoForm({
                 className="text-xs"
               />
               {pendingFiles[doc.id] && (
-                <span className="text-xs text-emerald-700 truncate max-w-[160px]">
+                <span className="text-xs text-rose-700 truncate max-w-[160px]">
                   {pendingFiles[doc.id]?.name}
                 </span>
               )}
@@ -392,7 +392,7 @@ export default function CreditoForm({
         <button
           type="submit"
           disabled={loading || totals.totalDue <= 0}
-          className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50"
+          className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 disabled:opacity-50"
         >
           {loading ? 'Guardando…' : submitLabel}
         </button>

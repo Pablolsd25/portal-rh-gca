@@ -1,8 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  CheckCircleIcon,
+  DocumentArrowDownIcon,
+  EyeIcon,
+  FolderOpenIcon,
+  XCircleIcon,
+} from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/client';
 import ProofsModal from '@/components/ventas/ProofsModal';
+import PendingQuoteCard from '@/components/ventas/PendingQuoteCard';
+import ApprovedQuoteCard from '@/components/ventas/ApprovedQuoteCard';
+import PpdQuoteCard from '@/components/ventas/PpdQuoteCard';
 import {
   clientName,
   esPpdOCredito,
@@ -210,11 +220,35 @@ export default function AprobacionPagosClient({
     }
   };
 
-  const tabs: { id: Tab; label: string; count: number; color: string }[] = [
-    { id: 'pendientes', label: 'Pendientes', count: pendingQuotes.length, color: 'amber' },
-    { id: 'aprobados', label: 'Aprobados', count: approvedQuotes.length, color: 'emerald' },
-    { id: 'ppd', label: 'PPD / Crédito', count: ppdQuotes.length, color: 'sky' },
+  const tabs: { id: Tab; label: string; count: number }[] = [
+    { id: 'pendientes', label: 'Pendientes', count: pendingQuotes.length },
+    { id: 'aprobados', label: 'Aprobados', count: approvedQuotes.length },
+    { id: 'ppd', label: 'PPD / Crédito', count: ppdQuotes.length },
   ];
+
+  const pagination = filteredList.length > PAGE_SIZE && (
+    <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={() => setPage(p => p - 1)}
+        className="px-3 py-1 border rounded-lg disabled:opacity-40"
+      >
+        Anterior
+      </button>
+      <span className="text-slate-500">
+        Página {page} de {totalPages} · {filteredList.length} registros
+      </span>
+      <button
+        type="button"
+        disabled={page >= totalPages}
+        onClick={() => setPage(p => p + 1)}
+        className="px-3 py-1 border rounded-lg disabled:opacity-40"
+      >
+        Siguiente
+      </button>
+    </div>
+  );
 
   return (
     <div>
@@ -233,7 +267,7 @@ export default function AprobacionPagosClient({
               onClick={() => setTab(t.id)}
               className={`flex-1 min-w-[120px] px-3 py-3 text-sm font-medium transition-colors ${
                 tab === t.id
-                  ? 'bg-white text-slate-900 border-b-2 border-emerald-600'
+                  ? 'bg-white text-slate-900 border-b-2 border-rose-800'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -284,7 +318,8 @@ export default function AprobacionPagosClient({
           </div>
         )}
 
-        <div className="divide-y divide-slate-100">
+        {/* Vista de lista para desktop */}
+        <div className="hidden md:block divide-y divide-slate-100">
           {pageItems.length === 0 && (
             <p className="px-5 py-10 text-center text-sm text-slate-400">
               No hay registros en esta pestaña.
@@ -314,7 +349,7 @@ export default function AprobacionPagosClient({
                       {isPpd && (
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                            fully ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
+                            fully ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                           }`}
                         >
                           {fully ? 'Pagado' : 'Saldo pendiente'}
@@ -356,24 +391,27 @@ export default function AprobacionPagosClient({
                     <button
                       type="button"
                       onClick={() => setProofsQuote(q)}
-                      className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg hover:bg-white"
+                      className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg hover:bg-white inline-flex items-center gap-1"
                     >
+                      <FolderOpenIcon className="w-4 h-4" />
                       Comprobantes ({q.quote_payment_proofs?.length || 0})
                     </button>
                     <button
                       type="button"
                       disabled={pdfLoading === q.id}
                       onClick={() => void runPdf(q, true)}
-                      className="px-3 py-1.5 text-xs border border-violet-200 text-violet-700 rounded-lg hover:bg-violet-50 disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs border border-violet-200 text-violet-700 rounded-lg hover:bg-violet-50 disabled:opacity-50 inline-flex items-center gap-1"
                     >
+                      <EyeIcon className="w-4 h-4" />
                       Ver PDF
                     </button>
                     <button
                       type="button"
                       disabled={pdfLoading === q.id}
                       onClick={() => void runPdf(q, false)}
-                      className="px-3 py-1.5 text-xs border border-sky-200 text-sky-700 rounded-lg hover:bg-sky-50 disabled:opacity-50"
+                      className="px-3 py-1.5 text-xs border border-sky-200 text-sky-700 rounded-lg hover:bg-sky-50 disabled:opacity-50 inline-flex items-center gap-1"
                     >
+                      <DocumentArrowDownIcon className="w-4 h-4" />
                       Descargar PDF
                     </button>
                     {tab === 'pendientes' && (
@@ -382,16 +420,18 @@ export default function AprobacionPagosClient({
                           type="button"
                           disabled={processing === q.id}
                           onClick={() => void decide(q.id, false)}
-                          className="px-3 py-1.5 text-xs border border-red-200 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                          className="px-3 py-1.5 text-xs border border-red-200 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50 inline-flex items-center gap-1"
                         >
+                          <XCircleIcon className="w-4 h-4" />
                           Rechazar
                         </button>
                         <button
                           type="button"
                           disabled={processing === q.id}
                           onClick={() => void decide(q.id, true)}
-                          className="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                          className="px-3 py-1.5 text-xs bg-rose-800 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50 inline-flex items-center gap-1"
                         >
+                          <CheckCircleIcon className="w-4 h-4" />
                           {processing === q.id ? '…' : 'Aprobar'}
                         </button>
                       </>
@@ -403,29 +443,55 @@ export default function AprobacionPagosClient({
           })}
         </div>
 
-        {filteredList.length > PAGE_SIZE && (
-          <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-sm">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage(p => p - 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40"
-            >
-              Anterior
-            </button>
-            <span className="text-slate-500">
-              Página {page} de {totalPages} · {filteredList.length} registros
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage(p => p + 1)}
-              className="px-3 py-1 border rounded-lg disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
+        {/* Vista de tarjetas para móvil */}
+        <div className="md:hidden p-3 space-y-3">
+          {pageItems.length === 0 && (
+            <p className="py-8 text-center text-sm text-slate-400">
+              No hay registros en esta pestaña.
+            </p>
+          )}
+          {pageItems.map(q => {
+            if (tab === 'pendientes') {
+              return (
+                <PendingQuoteCard
+                  key={q.id}
+                  quote={q}
+                  onApprove={id => void decide(id, true)}
+                  onReject={id => void decide(id, false)}
+                  onViewProofs={setProofsQuote}
+                  onDownloadPDF={q2 => void runPdf(q2, false)}
+                  onPreviewPDF={q2 => void runPdf(q2, true)}
+                  processingId={processing}
+                  pdfLoadingQuoteId={pdfLoading}
+                />
+              );
+            }
+            if (tab === 'aprobados') {
+              return (
+                <ApprovedQuoteCard
+                  key={q.id}
+                  quote={q}
+                  onViewProofs={setProofsQuote}
+                  onDownloadPDF={q2 => void runPdf(q2, false)}
+                  onPreviewPDF={q2 => void runPdf(q2, true)}
+                  pdfLoadingQuoteId={pdfLoading}
+                />
+              );
+            }
+            return (
+              <PpdQuoteCard
+                key={q.id}
+                quote={q}
+                onViewProofs={setProofsQuote}
+                onDownloadPDF={q2 => void runPdf(q2, false)}
+                onPreviewPDF={q2 => void runPdf(q2, true)}
+                pdfLoadingQuoteId={pdfLoading}
+              />
+            );
+          })}
+        </div>
+
+        {pagination}
       </div>
 
       {proofsQuote && (

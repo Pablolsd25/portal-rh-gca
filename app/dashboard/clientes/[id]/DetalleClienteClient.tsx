@@ -141,7 +141,7 @@ export default function DetalleClienteClient({ clientId }: { clientId: string })
     <div className="space-y-6">
       <Link
         href="/dashboard/clientes"
-        className="inline-block text-sm text-emerald-700 hover:underline"
+        className="inline-block text-sm text-rose-700 hover:underline"
       >
         ← Volver a la lista de Clientes
       </Link>
@@ -171,7 +171,7 @@ export default function DetalleClienteClient({ clientId }: { clientId: string })
             </Link>
             <Link
               href={`/dashboard/creditos/nuevo?clientId=${clientId}`}
-              className="px-3 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
+              className="px-3 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700"
             >
               Solicitar crédito
             </Link>
@@ -237,7 +237,7 @@ export default function DetalleClienteClient({ clientId }: { clientId: string })
                   </div>
                   <Link
                     href={`/dashboard/creditos/${c.id}`}
-                    className="text-xs text-emerald-700 hover:underline self-center"
+                    className="text-xs text-rose-700 hover:underline self-center"
                   >
                     Ver crédito
                   </Link>

@@ -26,7 +26,7 @@ export default async function NuevoCreditoPage({ searchParams }: Props) {
               ? `/dashboard/creditos/${refinanceFrom}`
               : '/dashboard/creditos'
           }
-          className="text-sm text-emerald-700 hover:underline"
+          className="text-sm text-rose-700 hover:underline"
         >
           ← Volver
         </Link>

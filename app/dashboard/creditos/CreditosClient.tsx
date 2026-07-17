@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+  BanknotesIcon,
+  ClockIcon,
+  PlusCircleIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/client';
 import { formatMoney } from '@/lib/ventas/quotes';
 import { fetchAndGenerateCreditPDF } from '@/lib/creditos/pdf';
@@ -20,7 +26,7 @@ export default function CreditosClient({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
-  const [counts, setCounts] = useState({ pendiente: 0, activo: 0 });
+  const [counts, setCounts] = useState({ pendiente: 0, activo: 0, clientes: 0 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,15 +46,16 @@ export default function CreditosClient({ userId }: { userId: string }) {
         .range(from, to);
       if (tab !== 'all') q = q.eq('status', tab);
 
-      const [list, pend, act] = await Promise.all([
+      const [list, pend, act, cli] = await Promise.all([
         q,
         supabase.from('credits').select('*', { count: 'exact', head: true }).eq('status', 'pendiente'),
         supabase.from('credits').select('*', { count: 'exact', head: true }).eq('status', 'activo'),
+        supabase.from('clients').select('*', { count: 'exact', head: true }),
       ]);
       if (list.error) throw list.error;
       setRows((list.data as unknown as Credit[]) || []);
       setTotalCount(list.count ?? 0);
-      setCounts({ pendiente: pend.count ?? 0, activo: act.count ?? 0 });
+      setCounts({ pendiente: pend.count ?? 0, activo: act.count ?? 0, clientes: cli.count ?? 0 });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar créditos');
     } finally {
@@ -102,7 +109,7 @@ export default function CreditosClient({ userId }: { userId: string }) {
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       pendiente: 'bg-amber-100 text-amber-800',
-      activo: 'bg-emerald-100 text-emerald-800',
+      activo: 'bg-rose-100 text-rose-800',
       rechazado: 'bg-red-100 text-red-800',
       pagado: 'bg-blue-100 text-blue-800',
       refinanciado: 'bg-slate-100 text-slate-700',
@@ -120,23 +127,80 @@ export default function CreditosClient({ userId }: { userId: string }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-xs text-slate-500 uppercase font-medium">Pendientes</p>
-          <p className="text-2xl font-semibold text-amber-700 mt-1">{counts.pendiente}</p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <p className="text-xs text-slate-500 uppercase font-medium">Activos</p>
-          <p className="text-2xl font-semibold text-emerald-700 mt-1">{counts.activo}</p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 col-span-2 sm:col-span-1 flex items-center justify-center">
-          <Link
-            href="/dashboard/creditos/nuevo"
-            className="w-full text-center px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700"
-          >
-            + Nuevo crédito
-          </Link>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <button
+          type="button"
+          onClick={() => setTab('pendiente')}
+          className="block text-left p-5 bg-white rounded-xl border border-slate-200 shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-amber-500 group"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-amber-100 rounded-lg">
+              <ClockIcon className="w-6 h-6 text-amber-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-slate-500 truncate">Solicitudes pendientes</p>
+              <p className="text-2xl font-semibold text-slate-900">{counts.pendiente}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs font-medium text-right text-amber-700 group-hover:underline">
+            Revisar →
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setTab('activo')}
+          className="block text-left p-5 bg-white rounded-xl border border-slate-200 shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-rose-500 group"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-rose-100 rounded-lg">
+              <BanknotesIcon className="w-6 h-6 text-rose-800" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-slate-500 truncate">Créditos activos</p>
+              <p className="text-2xl font-semibold text-slate-900">{counts.activo}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs font-medium text-right text-rose-800 group-hover:underline">
+            Gestionar →
+          </p>
+        </button>
+
+        <Link
+          href="/dashboard/clientes"
+          className="block p-5 bg-white rounded-xl border border-slate-200 shadow-md transition hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 group"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <UserGroupIcon className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-slate-500 truncate">Total clientes</p>
+              <p className="text-2xl font-semibold text-slate-900">{counts.clientes}</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs font-medium text-right text-blue-600 group-hover:underline">
+            Ver lista →
+          </p>
+        </Link>
+
+        <Link
+          href="/dashboard/creditos/nuevo"
+          className="block p-5 bg-rose-800 rounded-xl shadow-md transition hover:shadow-lg hover:bg-rose-900 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-rose-500 group"
+        >
+          <div className="flex items-center">
+            <div className="p-3 bg-white/10 rounded-lg">
+              <PlusCircleIcon className="w-6 h-6 text-white" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-rose-100 truncate">Nuevo crédito</p>
+              <p className="text-lg font-semibold text-white">Registrar</p>
+            </div>
+          </div>
+          <p className="mt-3 text-xs font-medium text-right text-rose-100 group-hover:underline">
+            Crear →
+          </p>
+        </Link>
       </div>
 
       <div className="flex gap-2">
@@ -153,7 +217,7 @@ export default function CreditosClient({ userId }: { userId: string }) {
             onClick={() => setTab(k)}
             className={`px-3 py-1.5 text-sm rounded-lg font-medium ${
               tab === k
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-rose-800 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -191,7 +255,7 @@ export default function CreditosClient({ userId }: { userId: string }) {
                       <td className="px-4 py-3">
                         <Link
                           href={`/dashboard/creditos/${c.id}`}
-                          className="font-medium text-slate-800 hover:text-emerald-700 hover:underline"
+                          className="font-medium text-slate-800 hover:text-rose-700 hover:underline"
                         >
                           {c.clients?.full_name || 'Cliente'}
                         </Link>
@@ -219,7 +283,7 @@ export default function CreditosClient({ userId }: { userId: string }) {
                         <div className="flex flex-wrap gap-2">
                           <Link
                             href={`/dashboard/creditos/${c.id}`}
-                            className="text-xs text-emerald-700 hover:underline font-medium"
+                            className="text-xs text-rose-700 hover:underline font-medium"
                           >
                             Ver
                           </Link>
@@ -245,7 +309,7 @@ export default function CreditosClient({ userId }: { userId: string }) {
                                 type="button"
                                 disabled={busy}
                                 onClick={() => void decidir(c.id, 'activo')}
-                                className="text-xs text-emerald-700 font-medium disabled:opacity-50"
+                                className="text-xs text-rose-700 font-medium disabled:opacity-50"
                               >
                                 Aprobar
                               </button>

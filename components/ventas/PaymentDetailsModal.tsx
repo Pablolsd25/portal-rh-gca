@@ -308,7 +308,7 @@ export default function PaymentDetailsModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm bg-rose-600 text-white rounded-lg hover:bg-rose-700 disabled:opacity-50"
             >
               {loading
                 ? 'Procesando…'

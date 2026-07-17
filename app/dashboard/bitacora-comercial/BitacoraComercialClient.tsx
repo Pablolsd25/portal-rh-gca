@@ -197,7 +197,7 @@ export default function BitacoraComercialClient({
         <button
           type="button"
           onClick={() => setShow(s => !s)}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg"
+          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-lg"
         >
           {show ? 'Cancelar' : 'Nuevo seguimiento'}
         </button>
@@ -220,7 +220,7 @@ export default function BitacoraComercialClient({
                 onClick={() => setForm(f => ({ ...f, entity_kind: kind }))}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg capitalize ${
                   form.entity_kind === kind
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-rose-600 text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -293,7 +293,7 @@ export default function BitacoraComercialClient({
           <button
             type="submit"
             disabled={busy}
-            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+            className="px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             Guardar
           </button>
@@ -317,7 +317,7 @@ export default function BitacoraComercialClient({
                       {r.client?.full_name || r.prospect?.full_name || 'Sin contacto'}
                       <span
                         className={`ml-2 text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                          r.client ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'
+                          r.client ? 'bg-rose-100 text-rose-700' : 'bg-sky-100 text-sky-700'
                         }`}
                       >
                         {r.client ? 'Cliente' : 'Prospecto'}

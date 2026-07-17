@@ -29,10 +29,10 @@ type Props = {
 };
 
 const inputClass =
-  'block w-full px-3 py-2 mt-1 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:bg-slate-50';
+  'block w-full px-3 py-2 mt-1 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 disabled:bg-slate-50';
 
 const smallInputClass =
-  'block w-full px-2 py-1.5 mt-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 disabled:bg-slate-50';
+  'block w-full px-2 py-1.5 mt-1 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 disabled:bg-slate-50';
 
 export default function ClienteForm({
   formData,
@@ -209,7 +209,7 @@ export default function ClienteForm({
       )}
 
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      {successMessage && <p className="mt-2 text-sm text-emerald-600">{successMessage}</p>}
+      {successMessage && <p className="mt-2 text-sm text-rose-600">{successMessage}</p>}
 
       <div className="flex justify-end gap-3 pt-3">
         <Link
@@ -221,7 +221,7 @@ export default function ClienteForm({
         <button
           type="submit"
           disabled={loading || !!successMessage}
-          className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:bg-emerald-300"
+          className="px-4 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 disabled:bg-rose-300"
         >
           {loading ? 'Guardando...' : isEditMode ? 'Actualizar Cliente' : 'Guardar Cliente'}
         </button>

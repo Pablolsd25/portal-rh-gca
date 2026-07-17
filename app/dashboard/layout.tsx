@@ -14,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: staffUser } = await supabase
     .from('staff_users')
-    .select('full_name, role, is_active')
+    .select('full_name, role, is_active, email')
     .eq('id', user.id)
     .single();
 
@@ -24,9 +24,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <NotificationProvider>
-      <div className="flex h-screen overflow-hidden">
-        <Sidebar userName={staffUser.full_name} userRole={staffUser.role} />
-        <main className="flex-1 overflow-y-auto bg-gray-50 pt-14 md:pt-0">{children}</main>
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar
+          userName={staffUser.full_name}
+          userRole={staffUser.role}
+          userEmail={staffUser.email || user.email}
+        />
+        <div className="flex-1 flex flex-col min-w-0">
+          <main className="flex-1 bg-gray-50">{children}</main>
+        </div>
       </div>
     </NotificationProvider>
   );

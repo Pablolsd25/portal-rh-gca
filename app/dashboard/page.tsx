@@ -11,7 +11,7 @@ export default async function DashboardPage() {
 
   const { data: staff } = await supabase
     .from('staff_users')
-    .select('id, full_name, role')
+    .select('id, full_name, role, sucursal')
     .eq('id', user!.id)
     .single();
 
@@ -58,9 +58,9 @@ export default async function DashboardPage() {
   const periodoAbierto = periodos?.find(p => p.estado === 'abierto');
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      <div className="mb-5 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">
           {isAdmin ? 'Panel de administración' : 'Dashboard'}
         </h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
               <p className="text-3xl font-bold text-slate-800 mt-1">{pendientesPago}</p>
               <Link
                 href="/dashboard/aprobacion-pagos"
-                className="text-xs text-emerald-600 hover:underline mt-2 inline-block"
+                className="text-xs text-rose-600 hover:underline mt-2 inline-block"
               >
                 Ir a aprobación →
               </Link>
@@ -90,13 +90,13 @@ export default async function DashboardPage() {
                 Reportes
               </p>
               <div className="flex flex-col gap-1.5 mt-2">
-                <Link href="/dashboard/reporte-ventas" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/reporte-ventas" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Reporte de ventas
                 </Link>
-                <Link href="/dashboard/admin-reporte-precios" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/admin-reporte-precios" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Análisis de precios
                 </Link>
-                <Link href="/dashboard/contabilidad" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/contabilidad" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Contabilidad PPD
                 </Link>
               </div>
@@ -106,13 +106,13 @@ export default async function DashboardPage() {
                 Accesos de gestión
               </p>
               <div className="flex flex-col gap-1.5 mt-2">
-                <Link href="/dashboard/cotizaciones" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/cotizaciones" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Cotizaciones
                 </Link>
-                <Link href="/dashboard/creditos" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/creditos" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Créditos
                 </Link>
-                <Link href="/dashboard/rutas" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/rutas" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Rutas / Báscula
                 </Link>
               </div>
@@ -121,7 +121,14 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {showVentas && <DashboardVentasClient userId={user!.id} role={role} />}
+      {showVentas && (
+        <DashboardVentasClient
+          userId={user!.id}
+          role={role}
+          userName={staff?.full_name ?? ''}
+          userSucursal={staff?.sucursal ?? null}
+        />
+      )}
 
       {showContabilidad && (
         <section className="mb-8">
@@ -135,7 +142,7 @@ export default async function DashboardPage() {
               </p>
               <Link
                 href="/dashboard/contabilidad"
-                className="text-xs text-emerald-600 hover:underline mt-3 inline-block"
+                className="text-xs text-rose-600 hover:underline mt-3 inline-block"
               >
                 Ir a Contabilidad PPD →
               </Link>
@@ -145,7 +152,7 @@ export default async function DashboardPage() {
                 Accesos rápidos
               </p>
               <div className="flex flex-col gap-1.5 mt-2">
-                <Link href="/dashboard/contabilidad" className="text-sm text-slate-700 hover:text-emerald-700 hover:underline">
+                <Link href="/dashboard/contabilidad" className="text-sm text-slate-700 hover:text-rose-700 hover:underline">
                   → Complementos PPD
                 </Link>
               </div>
@@ -166,7 +173,7 @@ export default async function DashboardPage() {
               </p>
               <Link
                 href="/dashboard/rutas"
-                className="text-xs text-emerald-600 hover:underline mt-3 inline-block"
+                className="text-xs text-rose-600 hover:underline mt-3 inline-block"
               >
                 Ir a Rutas / Báscula →
               </Link>
@@ -189,7 +196,7 @@ export default async function DashboardPage() {
                 <p className="text-3xl font-bold text-slate-800 mt-1">{totalEmpleados ?? 0}</p>
                 <Link
                   href="/dashboard/empleados"
-                  className="text-xs text-emerald-600 hover:underline mt-2 inline-block"
+                  className="text-xs text-rose-600 hover:underline mt-2 inline-block"
                 >
                   Ver empleados →
                 </Link>
@@ -201,7 +208,7 @@ export default async function DashboardPage() {
                 </p>
                 {periodoAbierto ? (
                   <>
-                    <p className="text-sm font-semibold text-emerald-700 mt-1">
+                    <p className="text-sm font-semibold text-rose-700 mt-1">
                       {new Date(periodoAbierto.fecha_inicio + 'T00:00:00').toLocaleDateString(
                         'es-MX',
                         { day: '2-digit', month: 'short' },
@@ -212,8 +219,8 @@ export default async function DashboardPage() {
                         { day: '2-digit', month: 'short', year: 'numeric' },
                       )}
                     </p>
-                    <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full mt-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                    <span className="inline-flex items-center gap-1 text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full mt-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
                       Abierto
                     </span>
                   </>
@@ -222,7 +229,7 @@ export default async function DashboardPage() {
                 )}
                 <Link
                   href="/dashboard/periodos"
-                  className="text-xs text-emerald-600 hover:underline mt-2 inline-block"
+                  className="text-xs text-rose-600 hover:underline mt-2 inline-block"
                 >
                   Ver periodos →
                 </Link>
@@ -235,19 +242,19 @@ export default async function DashboardPage() {
                 <div className="flex flex-col gap-1.5 mt-2">
                   <Link
                     href="/dashboard/bitacora"
-                    className="text-sm text-slate-700 hover:text-emerald-700 hover:underline"
+                    className="text-sm text-slate-700 hover:text-rose-700 hover:underline"
                   >
                     → Capturar bitácora
                   </Link>
                   <Link
                     href="/dashboard/nomina"
-                    className="text-sm text-slate-700 hover:text-emerald-700 hover:underline"
+                    className="text-sm text-slate-700 hover:text-rose-700 hover:underline"
                   >
                     → Ver nómina semanal
                   </Link>
                   <Link
                     href="/dashboard/empleados/nuevo"
-                    className="text-sm text-slate-700 hover:text-emerald-700 hover:underline"
+                    className="text-sm text-slate-700 hover:text-rose-700 hover:underline"
                   >
                     → Registrar empleado
                   </Link>
@@ -259,7 +266,7 @@ export default async function DashboardPage() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-700">Últimos periodos</h2>
-              <Link href="/dashboard/periodos" className="text-xs text-emerald-600 hover:underline">
+              <Link href="/dashboard/periodos" className="text-xs text-rose-600 hover:underline">
                 Ver todos
               </Link>
             </div>
@@ -290,7 +297,7 @@ export default async function DashboardPage() {
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       p.estado === 'abierto'
-                        ? 'bg-emerald-100 text-emerald-700'
+                        ? 'bg-rose-100 text-rose-700'
                         : 'bg-slate-100 text-slate-500'
                     }`}
                   >

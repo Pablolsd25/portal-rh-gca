@@ -18,18 +18,22 @@ export default function LoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInError) {
-      setError('Correo o contraseña incorrectos.');
+      setError('Correo electrónico o contraseña incorrectos.');
       setLoading(false);
       return;
     }
 
-    // Verificar que el usuario tenga rol rh o admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError('Error de autenticación.'); setLoading(false); return; }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setError('Error de autenticación.');
+      setLoading(false);
+      return;
+    }
 
     const { data: staffUser, error: staffError } = await supabase
       .from('staff_users')
@@ -39,7 +43,7 @@ export default function LoginPage() {
 
     if (staffError || !staffUser) {
       await supabase.auth.signOut();
-      setError('Tu usuario no está registrado en staff_users. Ejecuta el SQL de Humberto en Supabase.');
+      setError('Tu usuario no está registrado en staff_users.');
       setLoading(false);
       return;
     }
@@ -56,50 +60,56 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-6">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-4">
-            <svg className="w-8 h-8 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 px-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-xl">
+          <div className="flex justify-center">
+            <img
+              src="/logo.svg"
+              alt="Logo Grupo Castro Acero"
+              className="h-24 w-auto max-w-sm mb-0 mx-auto block"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">Portal GCA</h1>
-          <p className="text-sm text-slate-500 mt-1">Sistema integral · Grupo Castro Acero</p>
-        </div>
+        <h2 className="text-2xl font-bold text-center text-gray-800">Iniciar Sesión</h2>
+        <p className="text-sm text-center text-gray-500">Portal Interno Grupo Castro Acero</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form className="space-y-6" onSubmit={handleLogin}>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Correo Electrónico
+            </label>
             <input
+              id="email"
+              name="email"
               type="email"
+              autoComplete="email"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+              className="block w-full px-3 py-2 mt-1 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-rose-700 focus:border-rose-700 sm:text-sm"
               placeholder="tu@correo.com"
+              disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Contraseña
+            </label>
             <input
+              id="password"
+              name="password"
               type="password"
+              autoComplete="current-password"
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-900 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+              className="block w-full px-3 py-2 mt-1 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-rose-700 focus:border-rose-700 sm:text-sm"
               placeholder="••••••••"
+              disabled={loading}
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
             type="button"
@@ -113,12 +123,10 @@ export default function LoginPage() {
               setLoading(true);
               try {
                 const supabase = createClient();
-                const origin = window.location.origin;
                 const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-                  redirectTo: `${origin}/set-password`,
+                  redirectTo: `${window.location.origin}/set-password`,
                 });
                 if (resetError) throw resetError;
-                setError(null);
                 alert('Te enviamos un correo para restablecer la contraseña.');
               } catch {
                 setError('No se pudo enviar el correo de recuperación.');
@@ -126,7 +134,7 @@ export default function LoginPage() {
                 setLoading(false);
               }
             }}
-            className="w-full text-sm text-emerald-700 hover:text-emerald-800"
+            className="w-full text-sm text-rose-700 hover:text-rose-900"
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -134,9 +142,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 disabled:bg-emerald-300 text-white text-sm font-medium rounded-lg transition-colors"
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+              loading ? 'bg-rose-300' : 'bg-rose-800 hover:bg-rose-900'
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-700`}
           >
-            {loading ? 'Ingresando...' : 'Ingresar'}
+            {loading ? 'Ingresando…' : 'Iniciar Sesión'}
           </button>
         </form>
       </div>

@@ -2,8 +2,10 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #ffffff;
+  --background: #f9fafb;
   --foreground: #171717;
+  --gca-guinda: #881337;
+  --gca-guinda-dark: #4c0519;
 }
 
 @theme inline {
@@ -16,5 +18,39 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Staff sidebar scrollbar */
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #4c0519;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #881337;
+  border-radius: 999px;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #9f1239;
+}
+
+/* Hide scrollbar (used on mobile filter/tab strips) */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Comfortable tap targets on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a[role='button'],
+  [role='tab'] {
+    -webkit-tap-highlight-color: transparent;
+  }
 }

@@ -149,7 +149,7 @@ export default function ReporteVentasVendedorClient({ userId }: { userId: string
           <div className="mt-4 inline-block text-left space-y-2">
             <p
               className={`text-sm font-medium ${
-                compliance.visits >= 3 ? 'text-emerald-600' : 'text-red-600'
+                compliance.visits >= 3 ? 'text-rose-600' : 'text-red-600'
               }`}
             >
               Visitas a clientes/prospectos:{' '}
@@ -157,7 +157,7 @@ export default function ReporteVentasVendedorClient({ userId }: { userId: string
             </p>
             <p
               className={`text-sm font-medium ${
-                compliance.priceReports >= 2 ? 'text-emerald-600' : 'text-red-600'
+                compliance.priceReports >= 2 ? 'text-rose-600' : 'text-red-600'
               }`}
             >
               Reportes de precios: <span className="font-mono">{compliance.priceReports} / 2</span>
@@ -172,7 +172,7 @@ export default function ReporteVentasVendedorClient({ userId }: { userId: string
             </Link>
             <Link
               href="/dashboard/reporte-precios"
-              className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+              className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
             >
               Capturar reporte de precios
             </Link>
@@ -181,7 +181,7 @@ export default function ReporteVentasVendedorClient({ userId }: { userId: string
       ) : (
         <>
           {compliance && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-sm text-emerald-800 flex flex-wrap gap-4">
+            <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 text-sm text-rose-800 flex flex-wrap gap-4">
               <span>
                 ✓ Visitas: <strong>{compliance.visits} / 3</strong>
               </span>

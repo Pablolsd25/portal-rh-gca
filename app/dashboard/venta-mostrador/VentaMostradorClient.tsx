@@ -381,7 +381,7 @@ export default function VentaMostradorClient({
         </div>
       )}
       {ok && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg px-4 py-3">
+        <div className="bg-rose-50 border border-rose-200 text-rose-800 text-sm rounded-lg px-4 py-3">
           {ok}
         </div>
       )}
@@ -423,9 +423,9 @@ export default function VentaMostradorClient({
             <p className="text-[11px] text-slate-500 uppercase tracking-wide">Ventas</p>
             <p className="text-xl font-bold text-slate-900">{metrics.totalSales}</p>
           </div>
-          <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3">
-            <p className="text-[11px] text-emerald-700 uppercase tracking-wide">Monto</p>
-            <p className="text-xl font-bold text-emerald-800">{formatMoney(metrics.totalAmount)}</p>
+          <div className="rounded-lg bg-rose-50 border border-rose-100 p-3">
+            <p className="text-[11px] text-rose-700 uppercase tracking-wide">Monto</p>
+            <p className="text-xl font-bold text-rose-800">{formatMoney(metrics.totalAmount)}</p>
           </div>
           <div className="rounded-lg bg-amber-50 border border-amber-100 p-3 col-span-2 sm:col-span-1">
             <p className="text-[11px] text-amber-700 uppercase tracking-wide">Ticket prom.</p>
@@ -439,7 +439,7 @@ export default function VentaMostradorClient({
             {metrics.dailySales.map((d, i) => (
               <div key={`${d.day}-${i}`} className="flex-1 flex flex-col items-center gap-1 min-w-0">
                 <div
-                  className="w-full bg-emerald-500/80 rounded-t min-h-[2px]"
+                  className="w-full bg-rose-500/80 rounded-t min-h-[2px]"
                   style={{ height: `${Math.max(4, (d.amount / maxDailyAmount) * 100)}%` }}
                   title={formatMoney(d.amount)}
                 />
@@ -533,7 +533,7 @@ export default function VentaMostradorClient({
             <button
               type="button"
               onClick={() => setLines(prev => [...prev, emptyLine()])}
-              className="text-sm text-emerald-700 hover:underline"
+              className="text-sm text-rose-700 hover:underline"
             >
               + Agregar concepto
             </button>
@@ -565,7 +565,7 @@ export default function VentaMostradorClient({
             <button
               type="submit"
               disabled={busy}
-              className="ml-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+              className="ml-auto px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               {busy ? 'Guardando…' : 'Crear venta'}
             </button>
@@ -605,7 +605,7 @@ export default function VentaMostradorClient({
                         {corte.diferencia != null && diff !== 0 && (
                           <p
                             className={
-                              diff >= 0 ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'
+                              diff >= 0 ? 'text-rose-600 font-medium' : 'text-red-600 font-medium'
                             }
                           >
                             {diff >= 0 ? '+' : ''}
@@ -687,7 +687,7 @@ export default function VentaMostradorClient({
                     type="button"
                     disabled={busy}
                     onClick={() => setPayQuoteId(q.id)}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg disabled:opacity-50"
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg disabled:opacity-50"
                   >
                     Cobrar
                   </button>

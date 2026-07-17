@@ -142,7 +142,7 @@ export default function PagoFormModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-3 py-2 text-sm bg-emerald-600 text-white rounded-lg disabled:opacity-50"
+              className="px-3 py-2 text-sm bg-rose-600 text-white rounded-lg disabled:opacity-50"
             >
               {loading ? 'Registrando…' : 'Registrar pago'}
             </button>

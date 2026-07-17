@@ -178,7 +178,7 @@ export default function ListaPreciosClient({
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700">{error}</div>
       )}
       {ok && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2 text-sm text-emerald-800">{ok}</div>
+        <div className="bg-rose-50 border border-rose-200 rounded-lg px-4 py-2 text-sm text-rose-800">{ok}</div>
       )}
 
       {canEdit ? (
@@ -271,7 +271,7 @@ export default function ListaPreciosClient({
             onChange={e => setNuevo({ ...nuevo, precio_cdmx: e.target.value })}
             className="px-3 py-2 border rounded-lg text-sm text-slate-900"
           />
-          <button type="submit" disabled={saving} className="px-3 py-2 bg-emerald-600 text-white text-sm rounded-lg sm:col-span-2 lg:col-span-1">
+          <button type="submit" disabled={saving} className="px-3 py-2 bg-rose-600 text-white text-sm rounded-lg sm:col-span-2 lg:col-span-1">
             Guardar
           </button>
         </form>
@@ -375,7 +375,7 @@ export default function ListaPreciosClient({
                           <button
                             onClick={guardarEdit}
                             disabled={saving}
-                            className="px-2 py-0.5 bg-emerald-600 text-white rounded"
+                            className="px-2 py-0.5 bg-rose-600 text-white rounded"
                           >
                             OK
                           </button>
@@ -386,7 +386,7 @@ export default function ListaPreciosClient({
                       </div>
                     ) : canEdit ? (
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => empezarEdit(m)} className="text-emerald-700 hover:underline">
+                        <button onClick={() => empezarEdit(m)} className="text-rose-700 hover:underline">
                           Editar
                         </button>
                         <button onClick={() => borrar(m.id)} className="text-red-600 hover:underline">

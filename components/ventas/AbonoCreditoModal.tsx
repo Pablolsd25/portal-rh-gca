@@ -136,7 +136,7 @@ export default function AbonoCreditoModal({ quote, userId, onClose, onSuccess }:
           </div>
           <div>
             <p className="text-sm text-slate-600">Total Abonado</p>
-            <p className="text-lg font-bold text-emerald-600">{formatMoney(totalPaid)}</p>
+            <p className="text-lg font-bold text-rose-600">{formatMoney(totalPaid)}</p>
           </div>
           <div>
             <p className="text-sm text-slate-600">Saldo Pendiente</p>
@@ -215,7 +215,7 @@ export default function AbonoCreditoModal({ quote, userId, onClose, onSuccess }:
             <button
               type="submit"
               disabled={loading || paymentProofs.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-md hover:bg-emerald-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-rose-600 rounded-md hover:bg-rose-700 disabled:opacity-50"
             >
               {loading ? 'Enviando…' : 'Enviar a Revisión'}
             </button>

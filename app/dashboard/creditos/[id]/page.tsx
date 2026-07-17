@@ -18,7 +18,7 @@ export default async function DetalleCreditoPage({
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <Link href="/dashboard/creditos" className="text-sm text-emerald-700 hover:underline">
+        <Link href="/dashboard/creditos" className="text-sm text-rose-700 hover:underline">
           ← Volver a créditos
         </Link>
         <h1 className="text-2xl font-bold text-slate-800 mt-2">Detalle de crédito</h1>

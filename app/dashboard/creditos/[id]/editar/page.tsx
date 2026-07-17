@@ -20,7 +20,7 @@ export default async function EditarCreditoPage({
       <div className="mb-6">
         <Link
           href={`/dashboard/creditos/${id}`}
-          className="text-sm text-emerald-700 hover:underline"
+          className="text-sm text-rose-700 hover:underline"
         >
           ← Volver al detalle
         </Link>

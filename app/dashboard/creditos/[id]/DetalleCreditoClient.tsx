@@ -216,7 +216,7 @@ export default function DetalleCreditoClient({
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       pendiente: 'bg-amber-100 text-amber-800',
-      activo: 'bg-emerald-100 text-emerald-800',
+      activo: 'bg-rose-100 text-rose-800',
       rechazado: 'bg-red-100 text-red-800',
       pagado: 'bg-blue-100 text-blue-800',
       refinanciado: 'bg-slate-100 text-slate-700',
@@ -390,7 +390,7 @@ export default function DetalleCreditoClient({
                 type="button"
                 disabled={busy}
                 onClick={() => void decidir('activo')}
-                className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg disabled:opacity-50"
+                className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded-lg disabled:opacity-50"
               >
                 Aprobar
               </button>
@@ -408,7 +408,7 @@ export default function DetalleCreditoClient({
             <button
               type="button"
               onClick={() => setShowPago(true)}
-              className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg"
+              className="px-3 py-1.5 text-sm bg-rose-600 text-white rounded-lg"
             >
               Registrar abono
             </button>
@@ -477,7 +477,7 @@ export default function DetalleCreditoClient({
                   href={docPublicUrl(d.file_path)}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-emerald-700 text-xs font-medium hover:underline self-center"
+                  className="text-rose-700 text-xs font-medium hover:underline self-center"
                 >
                   Abrir
                 </a>
@@ -514,7 +514,7 @@ export default function DetalleCreditoClient({
             </h3>
             <div className="text-sm text-slate-600">
               Saldo:{' '}
-              <strong className={balance > 0 ? 'text-amber-700' : 'text-emerald-700'}>
+              <strong className={balance > 0 ? 'text-amber-700' : 'text-rose-700'}>
                 {formatMoney(Math.max(0, balance))}
               </strong>
             </div>
@@ -552,7 +552,7 @@ export default function DetalleCreditoClient({
                       <td className="px-4 py-2">
                         <Link
                           href={`/dashboard/creditos/${p.credit_id}`}
-                          className="text-emerald-700 hover:underline font-mono text-xs"
+                          className="text-rose-700 hover:underline font-mono text-xs"
                         >
                           {p.credit_id.substring(0, 7)}…
                         </Link>

@@ -24,9 +24,9 @@ export default async function AprobacionPagosPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Aprobación y gestión de pagos</h1>
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="pb-3 mb-4 border-b border-slate-200">
+        <h1 className="text-xl font-bold text-slate-800">Aprobación y gestión de pagos</h1>
         <p className="text-sm text-slate-600 mt-1">
           Pendientes · transferencias/depósitos aprobados · PPD y crédito
         </p>

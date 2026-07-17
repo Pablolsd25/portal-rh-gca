@@ -32,9 +32,7 @@ export default function SetPasswordPage() {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
       setMessage('¡Contraseña actualizada con éxito! Serás redirigido al login.');
-      setTimeout(() => {
-        router.push('/login');
-      }, 2500);
+      setTimeout(() => router.push('/login'), 2500);
     } catch {
       setError('No se pudo actualizar la contraseña. Abre el enlace del correo e intenta de nuevo.');
     } finally {
@@ -43,52 +41,47 @@ export default function SetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Establecer contraseña</h1>
-          <p className="text-sm text-slate-500 mt-1">Crea una contraseña para tu cuenta del Portal GCA</p>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 px-4">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-xl">
+        <div className="flex justify-center">
+          <img src="/logo.svg" alt="GCA" className="h-20 w-auto" />
         </div>
-        <form onSubmit={handleSetPassword} className="space-y-4">
-          <label className="block text-sm font-medium text-slate-700">
-            Nueva contraseña
+        <h2 className="text-2xl font-bold text-center text-gray-800">Establecer Contraseña</h2>
+        <p className="text-sm text-center text-gray-500">Crea una contraseña para tu cuenta.</p>
+        <form className="space-y-6" onSubmit={handleSetPassword}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
             <input
               type="password"
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
               disabled={loading || !!message}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              placeholder="Mínimo 6 caracteres"
+              className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-700 focus:border-rose-700 sm:text-sm"
+              placeholder="•••••••• (mín. 6 caracteres)"
             />
-          </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Confirmar contraseña
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
             <input
               type="password"
               required
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               disabled={loading || !!message}
-              className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
+              className="block w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-rose-700 focus:border-rose-700 sm:text-sm"
             />
-          </label>
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
-          {message && (
-            <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-              {message}
-            </p>
-          )}
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {message && <p className="text-sm text-green-600">{message}</p>}
           <button
             type="submit"
             disabled={loading || !!message}
-            className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50"
+            className={`w-full flex justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white ${
+              loading || message ? 'bg-rose-300' : 'bg-rose-800 hover:bg-rose-900'
+            }`}
           >
-            {loading ? 'Guardando…' : 'Guardar contraseña'}
+            {loading ? 'Guardando…' : 'Guardar Contraseña'}
           </button>
         </form>
       </div>

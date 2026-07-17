@@ -208,7 +208,7 @@ export default function ReportePreciosClient({
         <button
           type="button"
           onClick={() => setShow(s => !s)}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg"
+          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-lg"
         >
           {show ? 'Cancelar' : 'Nuevo reporte'}
         </button>
@@ -255,7 +255,7 @@ export default function ReportePreciosClient({
               <button
                 type="button"
                 onClick={() => setLines(prev => [...prev, newLine()])}
-                className="text-xs text-emerald-700 hover:underline"
+                className="text-xs text-rose-700 hover:underline"
               >
                 + Agregar material
               </button>
@@ -317,7 +317,7 @@ export default function ReportePreciosClient({
           <button
             type="submit"
             disabled={busy}
-            className="w-full px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+            className="w-full px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             {busy ? 'Guardando…' : `Guardar ${lines.length > 1 ? `${lines.length} reportes` : 'reporte'}`}
           </button>

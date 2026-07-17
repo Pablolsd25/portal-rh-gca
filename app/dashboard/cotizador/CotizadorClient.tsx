@@ -191,7 +191,7 @@ export default function CotizadorClient({
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>
       )}
       {ok && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-700">{ok}</div>
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-rose-700">{ok}</div>
       )}
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
@@ -295,7 +295,7 @@ export default function CotizadorClient({
           <button
             type="button"
             onClick={() => setLines(prev => [...prev, newLine()])}
-            className="text-xs text-emerald-700 hover:underline"
+            className="text-xs text-rose-700 hover:underline"
           >
             + Agregar renglón
           </button>
@@ -387,7 +387,7 @@ export default function CotizadorClient({
           type="button"
           disabled={saving}
           onClick={() => save('aceptada')}
-          className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50"
+          className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg disabled:opacity-50"
         >
           {saving ? 'Guardando...' : 'Guardar como aceptada'}
         </button>

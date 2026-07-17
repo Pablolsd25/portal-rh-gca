@@ -126,7 +126,7 @@ export default function ClientesClient() {
         />
         <Link
           href="/dashboard/clientes/nuevo"
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg"
+          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium rounded-lg"
         >
           + Agregar Cliente
         </Link>

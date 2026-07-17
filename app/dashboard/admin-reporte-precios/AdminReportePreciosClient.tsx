@@ -379,7 +379,7 @@ export default function AdminReportePreciosClient() {
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Mínimo</p>
-          <p className="text-lg font-bold text-emerald-700 mt-1">
+          <p className="text-lg font-bold text-rose-700 mt-1">
             {stats ? formatMoney(stats.min) : 'N/A'}
           </p>
         </div>
@@ -491,7 +491,7 @@ export default function AdminReportePreciosClient() {
                         t.trend === 'up'
                           ? 'text-red-600'
                           : t.trend === 'down'
-                            ? 'text-emerald-600'
+                            ? 'text-rose-600'
                             : 'text-slate-500'
                       }`}
                     >
@@ -524,7 +524,7 @@ export default function AdminReportePreciosClient() {
                           ? 'text-red-600'
                           : v.variation > 25
                             ? 'text-amber-600'
-                            : 'text-emerald-600'
+                            : 'text-rose-600'
                       }`}
                     >
                       {v.variation.toFixed(1)}%
@@ -544,7 +544,7 @@ export default function AdminReportePreciosClient() {
           <button
             type="button"
             onClick={() => void load()}
-            className="text-xs text-emerald-600 hover:underline"
+            className="text-xs text-rose-600 hover:underline"
           >
             Actualizar
           </button>
@@ -587,7 +587,7 @@ export default function AdminReportePreciosClient() {
                     <td className="px-3 py-2 text-slate-600 text-xs">
                       {r.brand || <span className="italic text-slate-400">Sin marca</span>}
                     </td>
-                    <td className="px-3 py-2 text-right font-bold text-emerald-700 text-xs">
+                    <td className="px-3 py-2 text-right font-bold text-rose-700 text-xs">
                       {formatMoney(r.price)}
                     </td>
                     <td className="px-3 py-2 text-slate-600 text-xs">{r.zone || 'N/A'}</td>

@@ -45,7 +45,7 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
 }) {
   const styles = {
-    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    primary: 'bg-rose-800 hover:bg-rose-900 text-white',
     secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700',
     danger: 'bg-red-600 hover:bg-red-700 text-white',
     ghost: 'bg-transparent hover:bg-slate-100 text-slate-700',
@@ -104,7 +104,7 @@ export function Badge({
 }) {
   const colors = {
     slate: 'bg-slate-100 text-slate-700',
-    emerald: 'bg-emerald-100 text-emerald-800',
+    emerald: 'bg-rose-100 text-rose-800',
     amber: 'bg-amber-100 text-amber-800',
     red: 'bg-red-100 text-red-800',
     blue: 'bg-blue-100 text-blue-800',
@@ -126,7 +126,7 @@ export function Alert({
 }) {
   const colors = {
     error: 'bg-red-50 border-red-200 text-red-700',
-    success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    success: 'bg-rose-50 border-rose-200 text-rose-800',
     info: 'bg-blue-50 border-blue-200 text-blue-800',
   }[tone];
   return <div className={`border text-sm rounded-lg px-4 py-3 ${colors}`}>{children}</div>;
@@ -216,7 +216,7 @@ export function Tabs({
           onClick={() => onChange(tab.id)}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
             value === tab.id
-              ? 'bg-emerald-600 text-white'
+              ? 'bg-rose-800 text-white'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
           }`}
         >

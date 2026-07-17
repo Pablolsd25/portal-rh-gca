@@ -153,15 +153,15 @@ export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
 
 export const STATUS_BADGE_CLASS: Record<QuoteStatus, string> = {
   borrador: 'bg-slate-100 text-slate-600',
-  enviada: 'bg-sky-100 text-sky-700',
-  aceptada: 'bg-emerald-100 text-emerald-700',
-  en_revision_pago: 'bg-amber-100 text-amber-800',
-  venta_concretada: 'bg-emerald-100 text-emerald-800',
-  pendiente_pago_mostrador: 'bg-orange-100 text-orange-800',
-  a_credito: 'bg-violet-100 text-violet-700',
+  enviada: 'bg-blue-100 text-blue-800',
+  aceptada: 'bg-green-100 text-green-800',
+  en_revision_pago: 'bg-cyan-100 text-cyan-800',
+  venta_concretada: 'bg-purple-100 text-purple-800',
+  pendiente_pago_mostrador: 'bg-yellow-100 text-yellow-800',
+  a_credito: 'bg-orange-100 text-orange-800',
   por_definir: 'bg-slate-100 text-slate-600',
-  rechazada: 'bg-red-100 text-red-700',
-  pagada: 'bg-emerald-100 text-emerald-800',
+  rechazada: 'bg-red-100 text-red-800',
+  pagada: 'bg-green-100 text-green-800',
 };
 
 export const IVA_RATE = 0.16;

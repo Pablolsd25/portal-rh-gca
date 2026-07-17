@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import FilePreviewModal from '@/components/ventas/FilePreviewModal';
 import { createClient } from '@/lib/supabase/client';
 import {
   clientName,
@@ -293,7 +294,7 @@ export default function ProofsModal({ quote, userId, onClose, onSaved }: Props) 
                               setError('No se pudo descargar el comprobante'),
                             )
                           }
-                          className="text-xs text-emerald-700 hover:underline"
+                          className="text-xs text-rose-700 hover:underline"
                         >
                           Descargar
                         </button>
@@ -373,7 +374,7 @@ export default function ProofsModal({ quote, userId, onClose, onSaved }: Props) 
                           p.complement_file_name || 'complemento.xml',
                         ).catch(() => setError('No se pudo descargar el complemento'))
                       }
-                      className="text-emerald-700 hover:underline"
+                      className="text-rose-700 hover:underline"
                     >
                       Descargar
                     </button>
@@ -441,7 +442,7 @@ export default function ProofsModal({ quote, userId, onClose, onSaved }: Props) 
             type="button"
             disabled={saving}
             onClick={() => void save()}
-            className="px-3 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+            className="px-3 py-2 text-sm bg-rose-800 text-white rounded-lg hover:bg-rose-900 disabled:opacity-50"
           >
             {saving ? 'Guardando…' : 'Guardar referencias'}
           </button>
@@ -449,23 +450,11 @@ export default function ProofsModal({ quote, userId, onClose, onSaved }: Props) 
       </div>
 
       {preview && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <p className="text-sm font-medium text-slate-800 truncate">{preview.name}</p>
-              <button
-                type="button"
-                onClick={() => setPreview(null)}
-                className="text-sm text-slate-500 hover:text-slate-800"
-              >
-                Cerrar
-              </button>
-            </div>
-            <div className="flex-1 min-h-[50vh]">
-              <iframe title={preview.name} src={preview.url} className="w-full h-full min-h-[50vh]" />
-            </div>
-          </div>
-        </div>
+        <FilePreviewModal
+          fileUrl={preview.url}
+          fileName={preview.name}
+          onClose={() => setPreview(null)}
+        />
       )}
     </div>
   );
