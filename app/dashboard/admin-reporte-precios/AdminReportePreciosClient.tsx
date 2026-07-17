@@ -24,6 +24,7 @@ type Report = {
   material_description: string;
   brand: string | null;
   price: number;
+  unit: string | null;
   zone: string | null;
   notes: string | null;
   seller: { id: string; full_name: string } | null;
@@ -31,11 +32,46 @@ type Report = {
 
 type Vendor = { id: string; full_name: string };
 
-const PAGE_SIZE = 10;
-const PIE_COLORS = ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b'];
+type ReportGroup = {
+  key: string;
+  entity_name: string;
+  entity_type: string;
+  zone: string;
+  sellerId: string | null;
+  sellerName: string;
+  latestAt: string;
+  notes: string | null;
+  materials: Report[];
+};
+
+const PAGE_SIZE = 8;
+const PIE_COLORS = ['#e11d48', '#0ea5e9', '#f59e0b', '#8b5cf6', '#10b981', '#64748b'];
 
 function median(sorted: number[]): number {
   return sorted[Math.floor(sorted.length / 2)];
+}
+
+/** Normaliza a precio por tonelada (KG → ×1000). */
+function pricePerTon(price: number, unit: string | null | undefined): number {
+  const u = (unit || '').trim().toUpperCase();
+  if (u === 'KG' || u === 'KILO' || u === 'KILOS' || u === 'K') {
+    return price * 1000;
+  }
+  return price;
+}
+
+function isLegacyKg(unit: string | null | undefined): boolean {
+  const u = (unit || '').trim().toUpperCase();
+  return u === 'KG' || u === 'KILO' || u === 'KILOS' || u === 'K';
+}
+
+function groupKey(r: Report): string {
+  return [
+    r.entity_name.trim().toLowerCase(),
+    r.entity_type.trim().toLowerCase(),
+    (r.zone || '').trim().toLowerCase(),
+    r.seller?.id || 'sin-vendedor',
+  ].join('|');
 }
 
 export default function AdminReportePreciosClient() {
@@ -49,6 +85,7 @@ export default function AdminReportePreciosClient() {
   const [materialFilter, setMaterialFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('all');
+  const [entitySearch, setEntitySearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -61,7 +98,7 @@ export default function AdminReportePreciosClient() {
         supabase
           .from('price_reports')
           .select(
-            'id, reported_at, entity_name, entity_type, material_description, brand, price, zone, notes, seller:seller_id(id, full_name)',
+            'id, reported_at, entity_name, entity_type, material_description, brand, price, unit, zone, notes, seller:seller_id(id, full_name)',
           )
           .order('reported_at', { ascending: false })
           .limit(2000),
@@ -98,6 +135,7 @@ export default function AdminReportePreciosClient() {
   }, [allReports]);
 
   const filtered = useMemo(() => {
+    const s = entitySearch.trim().toLowerCase();
     return allReports.filter(r => {
       if (vendorFilter !== 'all' && r.seller?.id !== vendorFilter) return false;
       if (materialFilter !== 'all' && r.material_description !== materialFilter) return false;
@@ -105,21 +143,72 @@ export default function AdminReportePreciosClient() {
       if (zoneFilter !== 'all' && (r.zone || 'Sin zona') !== zoneFilter) return false;
       if (startDate && new Date(r.reported_at) < new Date(startDate + 'T00:00:00')) return false;
       if (endDate && new Date(r.reported_at) > new Date(endDate + 'T23:59:59.999')) return false;
+      if (
+        s &&
+        !r.entity_name.toLowerCase().includes(s) &&
+        !(r.zone || '').toLowerCase().includes(s) &&
+        !(r.seller?.full_name || '').toLowerCase().includes(s)
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [allReports, vendorFilter, materialFilter, brandFilter, zoneFilter, startDate, endDate]);
+  }, [
+    allReports,
+    vendorFilter,
+    materialFilter,
+    brandFilter,
+    zoneFilter,
+    startDate,
+    endDate,
+    entitySearch,
+  ]);
+
+  const tonPrices = useMemo(
+    () => filtered.map(r => pricePerTon(Number(r.price) || 0, r.unit)).filter(p => p > 0),
+    [filtered],
+  );
 
   const stats = useMemo(() => {
-    const prices = filtered.map(r => Number(r.price)).filter(p => p > 0);
-    if (!prices.length) return null;
-    const sorted = [...prices].sort((a, b) => a - b);
+    if (!tonPrices.length) return null;
+    const sorted = [...tonPrices].sort((a, b) => a - b);
     return {
-      count: prices.length,
-      avg: prices.reduce((s, p) => s + p, 0) / prices.length,
+      count: tonPrices.length,
+      avg: tonPrices.reduce((s, p) => s + p, 0) / tonPrices.length,
       median: median(sorted),
       min: sorted[0],
       max: sorted[sorted.length - 1],
     };
+  }, [tonPrices]);
+
+  const groups = useMemo(() => {
+    const map = new Map<string, ReportGroup>();
+    for (const r of filtered) {
+      const key = groupKey(r);
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, {
+          key,
+          entity_name: r.entity_name,
+          entity_type: r.entity_type,
+          zone: r.zone || '',
+          sellerId: r.seller?.id || null,
+          sellerName: r.seller?.full_name || 'Sin vendedor',
+          latestAt: r.reported_at,
+          notes: r.notes,
+          materials: [r],
+        });
+      } else {
+        existing.materials.push(r);
+        if (r.reported_at > existing.latestAt) {
+          existing.latestAt = r.reported_at;
+          existing.notes = r.notes || existing.notes;
+        }
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime(),
+    );
   }, [filtered]);
 
   const materialChart = useMemo(() => {
@@ -140,7 +229,7 @@ export default function AdminReportePreciosClient() {
     const map: Record<string, number[]> = {};
     filtered.forEach(r => {
       const z = r.zone || 'Sin zona';
-      (map[z] ||= []).push(Number(r.price) || 0);
+      (map[z] ||= []).push(pricePerTon(Number(r.price) || 0, r.unit));
     });
     return Object.entries(map)
       .map(([zone, prices]) => ({
@@ -158,7 +247,7 @@ export default function AdminReportePreciosClient() {
       const b = r.brand || 'Sin marca';
       map[b] ||= { count: 0, total: 0 };
       map[b].count += 1;
-      map[b].total += Number(r.price) || 0;
+      map[b].total += pricePerTon(Number(r.price) || 0, r.unit);
     });
     return Object.entries(map)
       .map(([brand, d]) => ({
@@ -171,11 +260,17 @@ export default function AdminReportePreciosClient() {
   }, [filtered]);
 
   const trends = useMemo(() => {
-    const map: Record<string, { name: string; brand: string | null; points: { price: number; date: number }[] }> = {};
+    const map: Record<
+      string,
+      { name: string; brand: string | null; points: { price: number; date: number }[] }
+    > = {};
     filtered.forEach(r => {
       const key = `${r.material_description}__${r.brand || 'Sin marca'}`;
       map[key] ||= { name: r.material_description, brand: r.brand, points: [] };
-      map[key].points.push({ price: Number(r.price) || 0, date: new Date(r.reported_at).getTime() });
+      map[key].points.push({
+        price: pricePerTon(Number(r.price) || 0, r.unit),
+        date: new Date(r.reported_at).getTime(),
+      });
     });
     return Object.values(map)
       .map(m => {
@@ -185,6 +280,8 @@ export default function AdminReportePreciosClient() {
         const newPrice = sorted[sorted.length - 1].price;
         if (!oldPrice) return null;
         const changePercent = ((newPrice - oldPrice) / oldPrice) * 100;
+        // Descarta outliers absurdos por datos mal capturados
+        if (Math.abs(changePercent) > 500) return null;
         return {
           material: m.name,
           brand: m.brand,
@@ -202,7 +299,7 @@ export default function AdminReportePreciosClient() {
   const variations = useMemo(() => {
     const map: Record<string, number[]> = {};
     filtered.forEach(r => {
-      (map[r.material_description] ||= []).push(Number(r.price) || 0);
+      (map[r.material_description] ||= []).push(pricePerTon(Number(r.price) || 0, r.unit));
     });
     return Object.entries(map)
       .map(([material, prices]) => {
@@ -210,22 +307,25 @@ export default function AdminReportePreciosClient() {
         const min = Math.min(...prices);
         const max = Math.max(...prices);
         if (!min) return null;
-        return { material, min, max, variation: ((max - min) / min) * 100, count: prices.length };
+        const variation = ((max - min) / min) * 100;
+        if (variation > 500) return null;
+        return { material, min, max, variation, count: prices.length };
       })
       .filter((v): v is NonNullable<typeof v> => v !== null)
       .sort((a, b) => b.variation - a.variation)
       .slice(0, 5);
   }, [filtered]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(groups.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageGroups = groups.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const clearFilters = () => {
     setVendorFilter('all');
     setMaterialFilter('all');
     setBrandFilter('all');
     setZoneFilter('all');
+    setEntitySearch('');
     setStartDate('');
     setEndDate('');
     setPage(1);
@@ -253,6 +353,19 @@ export default function AdminReportePreciosClient() {
       {/* Filtros */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
         <div className="flex flex-wrap items-end gap-3">
+          <label className="text-xs text-slate-600">
+            Buscar cliente / zona
+            <input
+              type="search"
+              value={entitySearch}
+              onChange={e => {
+                setEntitySearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Ej. COACERO, Teotihuacán…"
+              className="mt-1 block border border-slate-300 rounded-lg px-3 py-2 text-sm w-full sm:w-56"
+            />
+          </label>
           <label className="text-xs text-slate-600">
             Vendedor
             <select
@@ -360,35 +473,52 @@ export default function AdminReportePreciosClient() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reportes</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Comercios</p>
+          <p className="text-2xl font-bold text-slate-800 mt-1">{groups.length}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Materiales</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{filtered.length}</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Promedio</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Promedio / TON
+          </p>
           <p className="text-lg font-bold text-slate-800 mt-1">
             {stats ? formatMoney(stats.avg) : 'N/A'}
           </p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Mediana</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Mediana / TON
+          </p>
           <p className="text-lg font-bold text-slate-800 mt-1">
             {stats ? formatMoney(stats.median) : 'N/A'}
           </p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Mínimo</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Mínimo / TON
+          </p>
           <p className="text-lg font-bold text-rose-700 mt-1">
             {stats ? formatMoney(stats.min) : 'N/A'}
           </p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Máximo</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            Máximo / TON
+          </p>
           <p className="text-lg font-bold text-red-600 mt-1">
             {stats ? formatMoney(stats.max) : 'N/A'}
           </p>
         </div>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-lg px-4 py-2.5">
+        Precios normalizados a <strong>pesos por tonelada (TON)</strong>. Reportes viejos en KG se
+        convierten ×1,000 al analizar.
       </div>
 
       {/* Gráficas */}
@@ -537,73 +667,120 @@ export default function AdminReportePreciosClient() {
         </div>
       </div>
 
-      {/* Tabla detallada */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">Reportes detallados</h3>
+      {/* Reportes agrupados por cliente / comercio */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-700">Reportes por cliente / comercio</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {groups.length} comercios · {filtered.length} materiales · precios / TON
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => void load()}
-            className="text-xs text-rose-600 hover:underline"
+            className="text-xs text-rose-800 hover:underline"
           >
             Actualizar
           </button>
         </div>
-        {pageRows.length === 0 ? (
-          <p className="px-4 py-8 text-sm text-slate-500 text-center">
+
+        {pageGroups.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 px-4 py-10 text-sm text-slate-500 text-center">
             No se encontraron reportes con los filtros seleccionados.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-left">
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Fecha</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Vendedor</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Entidad</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Material</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Marca</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase text-right">Precio</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Zona</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase">Notas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pageRows.map(r => (
-                  <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="px-3 py-2 whitespace-nowrap text-slate-600 text-xs">
-                      {new Date(r.reported_at).toLocaleDateString('es-MX')}
-                    </td>
-                    <td className="px-3 py-2 text-slate-700 text-xs">
-                      {r.seller?.full_name || 'N/A'}
-                    </td>
-                    <td className="px-3 py-2 text-slate-700 text-xs">
-                      {r.entity_name}{' '}
-                      <span className="text-slate-400">({r.entity_type})</span>
-                    </td>
-                    <td className="px-3 py-2 font-medium text-slate-800 text-xs">
-                      {r.material_description}
-                    </td>
-                    <td className="px-3 py-2 text-slate-600 text-xs">
-                      {r.brand || <span className="italic text-slate-400">Sin marca</span>}
-                    </td>
-                    <td className="px-3 py-2 text-right font-bold text-rose-700 text-xs">
-                      {formatMoney(r.price)}
-                    </td>
-                    <td className="px-3 py-2 text-slate-600 text-xs">{r.zone || 'N/A'}</td>
-                    <td className="px-3 py-2 text-slate-500 text-xs max-w-40 truncate">
-                      {r.notes || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
+        ) : (
+          pageGroups.map(group => (
+            <article
+              key={group.key}
+              className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden hover:border-rose-200 transition-colors"
+            >
+              <header className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="text-sm font-semibold text-slate-800 truncate">
+                      {group.entity_name}
+                    </h4>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize ${
+                        group.entity_type === 'cliente'
+                          ? 'bg-sky-100 text-sky-700'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {group.entity_type}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-medium">
+                      {group.materials.length} material
+                      {group.materials.length === 1 ? '' : 'es'}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] text-slate-500">
+                    <span>
+                      Vendedor: <strong className="text-slate-700">{group.sellerName}</strong>
+                    </span>
+                    {group.zone && <span>Zona: {group.zone}</span>}
+                    <span>
+                      Último:{' '}
+                      {new Date(group.latestAt).toLocaleString('es-MX', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
+                    </span>
+                    {group.notes && (
+                      <span className="italic truncate max-w-xs">Notas: {group.notes}</span>
+                    )}
+                  </div>
+                </div>
+              </header>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="bg-white border-b border-slate-100 text-left text-[10px] uppercase text-slate-400">
+                      <th className="px-4 py-2 font-semibold">Material</th>
+                      <th className="px-3 py-2 font-semibold">Marca</th>
+                      <th className="px-3 py-2 font-semibold text-right">Precio / TON</th>
+                      <th className="px-3 py-2 font-semibold">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {group.materials.map(m => {
+                      const ton = pricePerTon(Number(m.price) || 0, m.unit);
+                      const legacy = isLegacyKg(m.unit);
+                      return (
+                        <tr key={m.id} className="hover:bg-slate-50/80">
+                          <td className="px-4 py-2 font-medium text-slate-800 text-xs">
+                            {m.material_description}
+                            {legacy && (
+                              <span className="ml-2 text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                                era KG
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-slate-600 text-xs">
+                            {m.brand || <span className="italic text-slate-400">Sin marca</span>}
+                          </td>
+                          <td className="px-3 py-2 text-right font-bold text-rose-800 text-xs whitespace-nowrap">
+                            {formatMoney(ton)}
+                          </td>
+                          <td className="px-3 py-2 text-slate-500 text-xs whitespace-nowrap">
+                            {new Date(m.reported_at).toLocaleDateString('es-MX')}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          ))
         )}
+
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+          <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between text-xs text-slate-600">
             <p>
-              Página {currentPage} de {totalPages}
+              Página {currentPage} de {totalPages} · {groups.length} comercios
             </p>
             <div className="flex gap-1">
               <button
